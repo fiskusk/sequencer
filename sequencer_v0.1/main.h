@@ -79,7 +79,7 @@ void way_up(void)
 {
     timer1_set_state(DISABLE);
     pom = "sw rel1+turn fan   ";
-    current_state = EVENT0;
+    actual_state = EVENT0;
     TCNT1 = TREL;
     uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
     timer1_set_state(ENABLE);
@@ -89,7 +89,7 @@ void way_down(void)
 {
     timer1_set_state(DISABLE);
     pom = "Switch OFF Ucc    ";
-    current_state = EVENT1;
+    actual_state = EVENT1;
     TCNT1 = TSEQ;
     uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
     timer1_set_state(ENABLE);
