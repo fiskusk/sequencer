@@ -95,7 +95,7 @@ ISR(TIMER1_OVF_vect)
            }
            else
            {
-               uart_puts("EVENT2 vypinam rele 2\n");
+               uart_puts("EVENT2 vypinam rele 1\n");
                pom    = "Switch OFF rel 1";           }
            break;
         case FAULT:
