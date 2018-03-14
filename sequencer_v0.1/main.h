@@ -7,6 +7,7 @@
 #define TFAULT 0       // Time after fault * fault_count
 #define FCOUNT 10       // Indicate how many repeat will be in fault
 
+
 typedef enum{
     EVENT0,
     EVENT1,
@@ -16,58 +17,20 @@ typedef enum{
     TEST_PTT
 } sequencer_t;
 
-
 typedef enum {
     ENABLE = 1,
     DISABLE = !ENABLE,
 } state_t;
+
 
 uint8_t way = 0;
 uint8_t fault_count = 9;
 uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
 char *pom;
 uint8_t once = 1;
-
-
 sequencer_t old_state;
 sequencer_t actual_state = FAULT;
 
-/*********************************************************************************
-*
-* Function Name : setup
-* Description    : main setup initialization function, which set control
-*                  registers for PORTs, interrupts, display initialization
-*
-*********************************************************************************/
-void setup(void)
-{
-    // Setup for used ports
-    DDRB |= 0b01111111;          //display (H output)
-
-    DDRD &= ~(1<<2);             // INT0 as input (L)
-    PORTD |= 1<<2;               // INT0 H pull-up, L Hi-impedance
-
-    EICRA |= 1<<ISC00;            // any logical change INT0 generate interrupt
-    //| (1<<CS10);   // prescaler 64 CS11 CS10 //256 CS12
-    TIMSK1 |= 1<<TOIE1;                // enable interrupt when overflow Timer
-
-    lcd_init(LCD_DISP_ON);                 // initialization display
-    lcd_clrscr();               // clear display
-
-    sei();                      //enable all interrupts
-
-    uart_init();
-}
-
-void timer1_set_state(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
-{
-    (state == ENABLE) ? (TCCR1B |= (1<<CS12)) : (TCCR1B &= ~(1<<CS12));
-}
-
-void button_ptt_set_irq(state_t state)
-{
-    (state == ENABLE) ? (EIMSK |= 1<<INT0) : (EIMSK &= ~(1<<INT0));
-}
 
 void way_up(void)
 {

@@ -14,6 +14,34 @@
 #include "lcd.h"
 #include "main.h"
 
+#define button_ptt_is_pressed() bit_is_clear(PIND,2)
+
+void setup(void)
+{
+    DDRB |= 0b01111111;    //display (H output)
+    DDRD &= ~(1<<2);       // INT0 as input (L)
+    PORTD |= 1<<2;         // INT0 H pull-up, L Hi-impedance
+
+    EICRA |= 1<<ISC00;     // any logical change INT0 generate interrupt
+    TIMSK1 |= 1<<TOIE1;    // enable interrupt when overflow Timer
+
+    lcd_init(LCD_DISP_ON); // initialization display
+    lcd_clrscr();          // clear display
+
+    uart_init();
+    sei();                 //enable all interrupts
+}
+
+void timer1_set_state(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
+{
+    (state == ENABLE) ? (TCCR1B |= (1<<CS12)) : (TCCR1B &= ~(1<<CS12));
+}
+
+void button_ptt_set_irq(state_t state)
+{
+    (state == ENABLE) ? (EIMSK |= 1<<INT0) : (EIMSK &= ~(1<<INT0));
+}
+
 int main(void)
 {
     setup();
@@ -22,12 +50,9 @@ int main(void)
     TCNT1 = 65530;
     fault_flag = 2;
     timer1_set_state(ENABLE);
-    while (1)
-    {
-
-        lcd_puts(pom);
-        lcd_gotoxy(0,0);
-    }
+    lcd_puts(pom);
+    lcd_gotoxy(0,0);
+    while (1);
     return 0;
 }
 
@@ -47,7 +72,8 @@ ISR(INT0_vect)
 
 ISR(TIMER1_OVF_vect)
 {
-    switch(actual_state){
+    switch(actual_state)
+    {
         case EVENT0:
             timer1_set_state(DISABLE);
             if (way == 1)
@@ -163,13 +189,13 @@ ISR(TIMER1_OVF_vect)
             uart_puts("jsem v case PTT\n");
             uart_putc(PIND & (1<<2));
             actual_state = old_state;
-            if (  bit_is_clear(PIND,2) && !((actual_state == FAULT) || (actual_state == AFTER_FAULT)) )
+            if (  button_ptt_is_pressed() && actual_state != FAULT && actual_state != AFTER_FAULT )
             {
                 uart_puts("zapinam\n");
                 way = 1;
                 way_up();
             }
-            else if ( bit_is_set(PIND,2) && !((actual_state == FAULT) || (actual_state == AFTER_FAULT)) )
+            else if ( !button_ptt_is_pressed() && actual_state != FAULT && actual_state != AFTER_FAULT )
             {
                 uart_puts("vypinam\n");
                 way = 0;
@@ -181,9 +207,6 @@ ISR(TIMER1_OVF_vect)
                 error();
             }
             break;
-
-
-
         default:
             actual_state = FAULT;
     }
