@@ -78,27 +78,27 @@ void button_ptt_set_irq(state_t state)
 void way_up(void)
 
 {
-    tmr1(0);
+    timer1_set_state(DISABLE);
     pom = "sw rel1+turn fan   ";
     current_state = EVENT0;
     TCNT1 = TREL;
     uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
-    tmr1(1);
+    timer1_set_state(ENABLE);
 }
 
 void way_down(void)
 {
-    tmr1(0);
+    timer1_set_state(DISABLE);
     pom = "Switch OFF Ucc    ";
     current_state = EVENT1;
     TCNT1 = TSEQ;
     uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
-    tmr1(1);
+    timer1_set_state(ENABLE);
 }
 
 void error(void)
 {
-    tmr1(0);
+    timer1_set_state(DISABLE);
     if (fault_flag == 1)
     {
         pom = "nastala chyba       ";
