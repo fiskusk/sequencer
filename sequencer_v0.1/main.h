@@ -1,3 +1,6 @@
+#ifndef MAIN_H_INCLUDED
+#define MAIN_H_INCLUDED
+
 uint8_t way = 0;
 uint8_t fault_count = 9;
 uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
@@ -11,14 +14,14 @@ uint8_t once = 1;
 #define FCout 10       // Indicate how many repeat will be in fault
 
 typedef enum{
-    event0,
-    event1,
-    event2,
-    fault,
-    after_fault,
-    test_PTT
-} sequencer;
-sequencer current_state = fault;
+    EVENT0,
+    EVENT1,
+    EVENT2,
+    FAULT,
+    AFTER_FAULT,
+    TEST_PTT
+} sequencer_t;
+sequencer_t current_state = fault;
 
 /*********************************************************************************
 *
@@ -98,3 +101,5 @@ void error(void)
         uart_puts("To je divny, vse je uz ok\n");
     }
 }
+
+#endif // MAIN_H_INCLUDED
