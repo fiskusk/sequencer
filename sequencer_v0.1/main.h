@@ -25,12 +25,12 @@ typedef enum {
 uint8_t way = 0;
 uint8_t fault_count = 9;
 uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
-char* pom;
-int zalozni_state;
+char *pom;
 uint8_t once = 1;
 
 
-sequencer_t current_state = FAULT;
+sequencer_t old_state;
+sequencer_t actual_state = FAULT;
 
 /*********************************************************************************
 *
@@ -76,7 +76,6 @@ void button_ptt_set_irq(state_t state)
 }
 
 void way_up(void)
-
 {
     timer1_set_state(DISABLE);
     pom = "sw rel1+turn fan   ";
