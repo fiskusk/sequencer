@@ -16,23 +16,23 @@ void lcd_init(void)                       // initialization of display
 {
   LCD_ClrEnable();
   lcd_clrscr();
-  
+
   // Function set
   // 0 0 1 DL N F x x DL0=4bit, DL1=8bit; N0=1lines, N1=2lines; F0=5×8dots, F1=5×10dots
   LCD_WriteDC(0b00101000,0);
-  
+
   // Display on/off function (first hold off)
   // 0000 1 D C B D0=dis off, D1=dis on, C0=cursor off, C1=cursor on, B0=blinks off, B1=blinks on
-  LCD_WriteDC(0b00001000,0);                         
+  LCD_WriteDC(0b00001000,0);
   lcd_clrscr();
-  
+
   // Entry mode set
   // 0000 01 ID S ID0=decrement ID1=increment, S1=Accompanies display shift
-  LCD_WriteDC(0b00000110,0);            
-  
+  LCD_WriteDC(0b00000110,0);
+
   // Now turn on display and sets on of function
   // 0000 1 D C B D0=dis off, D1=dis on, C0=cursor off, C1=cursor on, B0=blinks off, B1=blinks on
-  LCD_WriteDC(0b00001100,0);                          
+  LCD_WriteDC(0b00001100,0);
 }
 
 void lcd_clrscr(void)                       // clear display and set position of cursor on default value
@@ -64,25 +64,21 @@ void LCD_WriteDC(unsigned char val,unsigned char DC)      // write a data or a c
 
 void lcd_gotoxy(unsigned char y, unsigned char x)             // set position of cursor
 {
-	switch(y)
-	{
-		case 0: x+=0x00; break;
-		case 1: x+=0x40; break;
-		case 2: x+=0x14; break;
-		case 3: x+=0x54; break;
-	}
-	LCD_WriteDC(x|0x80,0);                            // x is DDRAM address of position and 0x80 is command to set DDRAM address
+    switch(y)
+    {
+        case 0: x+=0x00; break;
+        case 1: x+=0x40; break;
+        case 2: x+=0x14; break;
+        case 3: x+=0x54; break;
+    }
+    LCD_WriteDC(x|0x80,0);                            // x is DDRAM address of position and 0x80 is command to set DDRAM address
 }
 
 void lcd_puts(const char *s)            // draw on display a constant string
 {
-	while(*s != '\0')
-	{
-		LCD_WriteDC(*s,1);
-		s +=1;
-	}
+    while(*s != '\0')
+    {
+        LCD_WriteDC(*s,1);
+        s +=1;
+    }
 }
-
-
-
-
