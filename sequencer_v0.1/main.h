@@ -17,6 +17,11 @@ typedef enum{
 } sequencer_t;
 
 
+typedef enum {
+    ENABLE = 1,
+    DISABLE = !ENABLE,
+} state_t;
+
 uint8_t way = 0;
 uint8_t fault_count = 9;
 uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
@@ -54,17 +59,17 @@ void setup(void)
     uart_init();
 }
 
-void tmr1(uint8_t on_off)    // switch, which turn on (1) timer1, or turn off (0)
+void timer1_set_state(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
 {
-    if (on_off == 1)
+    if (state == ENABLE)
        TCCR1B |= (1<<CS12);
     else
        TCCR1B &= ~(1<<CS12);
 }
 
-void ptt(uint8_t on_off)
+void button_ptt_set_irq(state_t state)
 {
-    if (on_off == 1)
+    if (state == ENABLE)
        EIMSK |= 1<<INT0;           // enable INT0
     else
        EIMSK &= ~(1<<INT0);           // enable INT0

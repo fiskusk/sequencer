@@ -21,7 +21,7 @@ int main(void)
     uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
     TCNT1 = 65530;
     fault_flag = 2;
-    tmr1(1);
+    timer1_set_state(ENABLE);
     while (1)
     {
 
@@ -33,7 +33,7 @@ int main(void)
 
 ISR(INT0_vect)
 {
-    tmr1(0);
+    timer1_set_state(DISABLE);
     TCNT1 = 64910;
     if (once == 1)
     {
@@ -42,20 +42,20 @@ ISR(INT0_vect)
     }
     current_state = TEST_PTT;
     uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
-    tmr1(1);
+    timer1_set_state(ENABLE);
 }
 
 ISR(TIMER1_OVF_vect)
 {
     switch(current_state){
         case EVENT0:
-            tmr1(0);
+            timer1_set_state(DISABLE);
             if (way == 1)
             {
                 pom = "Switch ON rel 2    ";
                 uart_puts("EVENT0 zapinam rele 2\n");
                 TCNT1 = TSEQ;
-                tmr1(1);
+                timer1_set_state(ENABLE);
                 current_state = EVENT1;
             }
             else
@@ -64,17 +64,17 @@ ISR(TIMER1_OVF_vect)
                 uart_puts("EVENT0 vypinam rele 2\n");
                 TCNT1 = TREL;
                 current_state = EVENT2;
-                tmr1(1);
+                timer1_set_state(ENABLE);
             }
             break;
         case EVENT1:
-            tmr1(0);
+            timer1_set_state(DISABLE);
             if (way == 1)
             {
                 pom = "Switch ON bias   ";
                 uart_puts("EVENT1 zapinam bias\n");
                 TCNT1 = TSEQ;
-                tmr1(1);
+                timer1_set_state(ENABLE);
                 current_state = EVENT2;
             }
             else
@@ -82,12 +82,12 @@ ISR(TIMER1_OVF_vect)
                 pom = "Switch OFF bias    ";
                 uart_puts("EVENT 1  vypinam bias\n");
                 TCNT1 = TSEQ;
-                tmr1(1);
+                timer1_set_state(ENABLE);
                 current_state = EVENT0;
             }
             break;
         case EVENT2:
-           tmr1(0);
+           timer1_set_state(DISABLE);
            if (way == 1)
            {
                uart_puts("EVENT2 zapinam Ucc\n");
@@ -99,8 +99,8 @@ ISR(TIMER1_OVF_vect)
                pom    = "Switch OFF rel 1";           }
            break;
         case FAULT:
-           tmr1(0);
-           ptt(0);
+           timer1_set_state(DISABLE);
+           button_ptt_set_irq(DISABLE);
            if (once == 1)
            {
                uart_puts("nastal FAULT - FAULT postupne vse vypnu a drz�m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
@@ -116,7 +116,7 @@ ISR(TIMER1_OVF_vect)
                fault_count++;
                current_state = FAULT;
                once = !once;
-               tmr1(1);
+               timer1_set_state(ENABLE);
            }
            else if (fault_count < FCOUNT)
            {
@@ -126,7 +126,7 @@ ISR(TIMER1_OVF_vect)
                uart_puts("FAULT_count:");
                uart_putc(fault_count);
                uart_puts("\n");
-               tmr1(1);
+               timer1_set_state(ENABLE);
            }
            else
            {
@@ -136,11 +136,11 @@ ISR(TIMER1_OVF_vect)
                TCNT1 = 65520;
                fault_count = 0;
                once = 1;
-               tmr1(1);
+               timer1_set_state(ENABLE);
            }
            break;
         case AFTER_FAULT:
-            tmr1(0);
+            timer1_set_state(DISABLE);
             if (fault_flag >= 1)
             {
                 uart_puts("Pusteni ADC a cekani na komparaci, nyni simuluji ze vse OK pevnym nastavim fault_flag = 0\n");
@@ -148,18 +148,18 @@ ISR(TIMER1_OVF_vect)
                 fault_flag = 0;
                 current_state = AFTER_FAULT;
                 TCNT1 = 250;
-                tmr1(1);
+                timer1_set_state(ENABLE);
             }
             else
             {
                 uart_puts("pokud vse OK, pak skace sem a nastavi curent state EVENT0, tedy umozneno startovat pres tlacitko do UP, DW pokud komparator nespusti FAULT \n");
                 pom = "Vse OK           ";
-                ptt(1);
+                button_ptt_set_irq(ENABLE);
                 current_state = EVENT0;
             }
             break;
          case TEST_PTT:
-            tmr1(0);
+            timer1_set_state(DISABLE);
             uart_puts("jsem v case PTT\n");
             uart_putc(PIND & (1<<2));
             current_state = zalozni_state;
