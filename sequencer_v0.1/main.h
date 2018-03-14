@@ -5,7 +5,7 @@
 #define TSEQ 500       // Time of sequence
 #define TREL 5000      // Delay time after servo1 switch on
 #define TFAULT 0       // Time after fault * fault_count
-#define FCOUT 10       // Indicate how many repeat will be in fault
+#define FCOUNT 10       // Indicate how many repeat will be in fault
 
 typedef enum{
     EVENT0,
@@ -25,7 +25,7 @@ int zalozni_state;
 uint8_t once = 1;
 
 
-sequencer_t current_state = fault;
+sequencer_t current_state = FAULT;
 
 /*********************************************************************************
 *
@@ -86,7 +86,7 @@ void way_down(void)
     tmr1(0);
     pom = "Switch OFF Ucc    ";
     current_state = EVENT1;
-    TCNT1 = TSeq;
+    TCNT1 = TSEQ;
     uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
     tmr1(1);
 }

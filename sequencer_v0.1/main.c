@@ -40,7 +40,7 @@ ISR(INT0_vect)
         zalozni_state = current_state;
         once = !once;
     }
-    current_state = test_PTT;
+    current_state = TEST_PTT;
     uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
     tmr1(1);
 }
@@ -109,22 +109,22 @@ ISR(TIMER1_OVF_vect)
                pom = "Switch OFF bias    ";
                _delay_ms(TSEQ);
                pom = "switch OFF rel 2   ";
-               _delay_ms(TRel);
+               _delay_ms(TREL);
                pom = "switch OFF rel 1   ";
                pom = "rozmrdals to       ";
                TCNT1 = TFAULT;
-               FAULT_count++;
+               fault_count++;
                current_state = FAULT;
                once = !once;
                tmr1(1);
            }
-           else if (FAULT_count < FCout)
+           else if (fault_count < FCOUNT)
            {
                TCNT1 = TFAULT;
-               FAULT_count++;
+               fault_count++;
                current_state = FAULT;
                uart_puts("FAULT_count:");
-               uart_putc(FAULT_count);
+               uart_putc(fault_count);
                uart_puts("\n");
                tmr1(1);
            }
@@ -134,7 +134,7 @@ ISR(TIMER1_OVF_vect)
                pom = "Checking process   ";
                current_state = AFTER_FAULT;
                TCNT1 = 65520;
-               FAULT_count = 0;
+               fault_count = 0;
                once = 1;
                tmr1(1);
            }
@@ -158,7 +158,7 @@ ISR(TIMER1_OVF_vect)
                 current_state = EVENT0;
             }
             break;
-         case test_PTT:
+         case TEST_PTT:
             tmr1(0);
             uart_puts("jsem v case PTT\n");
             uart_putc(PIND & (1<<2));
@@ -184,7 +184,7 @@ ISR(TIMER1_OVF_vect)
 
 
 
-        deFAULT:
+        default:
             current_state = FAULT;
     }
 }
