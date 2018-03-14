@@ -1,17 +1,11 @@
 #ifndef MAIN_H_INCLUDED
 #define MAIN_H_INCLUDED
 
-uint8_t way = 0;
-uint8_t fault_count = 9;
-uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
-char* pom;
-int zalozni_state;
-uint8_t once = 1;
 
-#define TSeq 500              // Time of sequence
-#define TRel 5000        // Delay time after servo1 switch on
-#define Tfault 0       // Time after fault * fault_count
-#define FCout 10       // Indicate how many repeat will be in fault
+#define TSEQ 500       // Time of sequence
+#define TREL 5000      // Delay time after servo1 switch on
+#define TFAULT 0       // Time after fault * fault_count
+#define FCOUT 10       // Indicate how many repeat will be in fault
 
 typedef enum{
     EVENT0,
@@ -21,6 +15,16 @@ typedef enum{
     AFTER_FAULT,
     TEST_PTT
 } sequencer_t;
+
+
+uint8_t way = 0;
+uint8_t fault_count = 9;
+uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
+char* pom;
+int zalozni_state;
+uint8_t once = 1;
+
+
 sequencer_t current_state = fault;
 
 /*********************************************************************************
@@ -71,8 +75,8 @@ void way_up(void)
 {
     tmr1(0);
     pom = "sw rel1+turn fan   ";
-    current_state = event0;
-    TCNT1 = TRel;
+    current_state = EVENT0;
+    TCNT1 = TREL;
     uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
     tmr1(1);
 }
@@ -81,7 +85,7 @@ void way_down(void)
 {
     tmr1(0);
     pom = "Switch OFF Ucc    ";
-    current_state = event1;
+    current_state = EVENT1;
     TCNT1 = TSeq;
     uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
     tmr1(1);

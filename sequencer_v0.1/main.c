@@ -18,7 +18,7 @@ int main(void)
 {
     setup();
     pom = "Pok";
-    uart_puts("Start , vse vypne skokem do fault a provede prvni test v after_fault\n");
+    uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
     TCNT1 = 65530;
     fault_flag = 2;
     tmr1(1);
@@ -48,114 +48,114 @@ ISR(INT0_vect)
 ISR(TIMER1_OVF_vect)
 {
     switch(current_state){
-        case event0:
+        case EVENT0:
             tmr1(0);
             if (way == 1)
             {
                 pom = "Switch ON rel 2    ";
-                uart_puts("event0 zapinam rele 2\n");
-                TCNT1 = TSeq;
+                uart_puts("EVENT0 zapinam rele 2\n");
+                TCNT1 = TSEQ;
                 tmr1(1);
-                current_state = event1;
+                current_state = EVENT1;
             }
             else
             {
                 pom = "Switch OFF rel 2    ";
-                uart_puts("event0 vypinam rele 2\n");
-                TCNT1 = TRel;
-                current_state = event2;
+                uart_puts("EVENT0 vypinam rele 2\n");
+                TCNT1 = TREL;
+                current_state = EVENT2;
                 tmr1(1);
             }
             break;
-        case event1:
+        case EVENT1:
             tmr1(0);
             if (way == 1)
             {
                 pom = "Switch ON bias   ";
-                uart_puts("event1 zapinam bias\n");
-                TCNT1 = TSeq;
+                uart_puts("EVENT1 zapinam bias\n");
+                TCNT1 = TSEQ;
                 tmr1(1);
-                current_state = event2;
+                current_state = EVENT2;
             }
             else
             {
                 pom = "Switch OFF bias    ";
-                uart_puts("event 1  vypinam bias\n");
-                TCNT1 = TSeq;
+                uart_puts("EVENT 1  vypinam bias\n");
+                TCNT1 = TSEQ;
                 tmr1(1);
-                current_state = event0;
+                current_state = EVENT0;
             }
             break;
-        case event2:
+        case EVENT2:
            tmr1(0);
            if (way == 1)
            {
-               uart_puts("event2 zapinam Ucc\n");
+               uart_puts("EVENT2 zapinam Ucc\n");
                pom = "Switch ON Ucc     ";
            }
            else
            {
-               uart_puts("event2 vypinam rele 2\n");
+               uart_puts("EVENT2 vypinam rele 2\n");
                pom    = "Switch OFF rel 1";           }
            break;
-        case fault:
+        case FAULT:
            tmr1(0);
            ptt(0);
            if (once == 1)
            {
-               uart_puts("nastal fault - fault postupne vse vypnu a drz�m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
+               uart_puts("nastal FAULT - FAULT postupne vse vypnu a drz�m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
                pom = "Switch OFF Ucc     ";
-               _delay_ms(TSeq);
+               _delay_ms(TSEQ);
                pom = "Switch OFF bias    ";
-               _delay_ms(TSeq);
+               _delay_ms(TSEQ);
                pom = "switch OFF rel 2   ";
                _delay_ms(TRel);
                pom = "switch OFF rel 1   ";
                pom = "rozmrdals to       ";
-               TCNT1 = Tfault;
-               fault_count++;
-               current_state = fault;
+               TCNT1 = TFAULT;
+               FAULT_count++;
+               current_state = FAULT;
                once = !once;
                tmr1(1);
            }
-           else if (fault_count < FCout)
+           else if (FAULT_count < FCout)
            {
-               TCNT1 = Tfault;
-               fault_count++;
-               current_state = fault;
-               uart_puts("fault_count:");
-               uart_putc(fault_count);
+               TCNT1 = TFAULT;
+               FAULT_count++;
+               current_state = FAULT;
+               uart_puts("FAULT_count:");
+               uart_putc(FAULT_count);
                uart_puts("\n");
                tmr1(1);
            }
            else
            {
-               uart_puts("jak probehne x opakovani faultu (v prvnim startu prednastaveny jenom na jedno projet�), pak zkontroluju jestli je uz vse OK SKOKEM na after fault\n");
+               uart_puts("jak probehne x opakovani FAULTu (v prvnim startu prednastaveny jenom na jedno projet�), pak zkontroluju jestli je uz vse OK SKOKEM na after FAULT\n");
                pom = "Checking process   ";
-               current_state = after_fault;
+               current_state = AFTER_FAULT;
                TCNT1 = 65520;
-               fault_count = 0;
+               FAULT_count = 0;
                once = 1;
                tmr1(1);
            }
            break;
-        case after_fault:
+        case AFTER_FAULT:
             tmr1(0);
             if (fault_flag >= 1)
             {
                 uart_puts("Pusteni ADC a cekani na komparaci, nyni simuluji ze vse OK pevnym nastavim fault_flag = 0\n");
                 pom = "SW&RD ADC a COMP    ";
                 fault_flag = 0;
-                current_state = after_fault;
+                current_state = AFTER_FAULT;
                 TCNT1 = 250;
                 tmr1(1);
             }
             else
             {
-                uart_puts("pokud vse OK, pak skace sem a nastavi curent state event0, tedy umozneno startovat pres tlacitko do UP, DW pokud komparator nespusti fault \n");
+                uart_puts("pokud vse OK, pak skace sem a nastavi curent state EVENT0, tedy umozneno startovat pres tlacitko do UP, DW pokud komparator nespusti FAULT \n");
                 pom = "Vse OK           ";
                 ptt(1);
-                current_state = event0;
+                current_state = EVENT0;
             }
             break;
          case test_PTT:
@@ -163,13 +163,13 @@ ISR(TIMER1_OVF_vect)
             uart_puts("jsem v case PTT\n");
             uart_putc(PIND & (1<<2));
             current_state = zalozni_state;
-            if (  bit_is_clear(PIND,2) && !((current_state == fault) || (current_state == after_fault)) )
+            if (  bit_is_clear(PIND,2) && !((current_state == FAULT) || (current_state == AFTER_FAULT)) )
             {
                 uart_puts("zapinam\n");
                 way = 1;
                 way_up();
             }
-            else if ( bit_is_set(PIND,2) && !((current_state == fault) || (current_state == after_fault)) )
+            else if ( bit_is_set(PIND,2) && !((current_state == FAULT) || (current_state == AFTER_FAULT)) )
             {
                 uart_puts("vypinam\n");
                 way = 0;
@@ -184,7 +184,7 @@ ISR(TIMER1_OVF_vect)
 
 
 
-        default:
-            current_state = fault;
+        deFAULT:
+            current_state = FAULT;
     }
 }
