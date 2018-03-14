@@ -8,6 +8,9 @@
 #define FCOUNT 10       // Indicate how many repeat will be in fault
 
 
+#define button_ptt_is_pressed() bit_is_clear(PIND,2)
+
+
 typedef enum{
     EVENT0,
     EVENT1,
@@ -31,6 +34,16 @@ uint8_t once = 1;
 sequencer_t old_state;
 sequencer_t actual_state = FAULT;
 
+
+void timer1_set_state(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
+{
+    (state == ENABLE) ? (TCCR1B |= (1<<CS12)) : (TCCR1B &= ~(1<<CS12));
+}
+
+void button_ptt_set_irq(state_t state)
+{
+    (state == ENABLE) ? (EIMSK |= 1<<INT0) : (EIMSK &= ~(1<<INT0));
+}
 
 void way_up(void)
 {
