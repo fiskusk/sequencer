@@ -10,9 +10,18 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
+#include "main.h"
 #include "uart.h"
 #include "lcd.h"
-#include "main.h"
+#include "events.h"
+
+uint8_t way = 0;
+uint8_t fault_count = 9;
+uint8_t fault_flag = 2;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
+char *pom;
+uint8_t once = 1;
+sequencer_t old_state;
+sequencer_t actual_state = FAULT;
 
 
 void setup(void)
@@ -45,6 +54,51 @@ int main(void)
     return 0;
 }
 
+void timer1_set_state(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
+{
+	(state == ENABLE) ? (TCCR1B |= (1<<CS12)) : (TCCR1B &= ~(1<<CS12));
+}
+
+void button_ptt_set_irq(state_t state)
+{
+	(state == ENABLE) ? (EIMSK |= 1<<INT0) : (EIMSK &= ~(1<<INT0));
+}
+
+void way_up(void)
+{
+	timer1_set_state(DISABLE);
+	pom = "sw rel1+turn fan   ";
+	actual_state = EVENT0;
+	TCNT1 = TREL;
+	uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
+	timer1_set_state(ENABLE);
+}
+
+void way_down(void)
+{
+	timer1_set_state(DISABLE);
+	pom = "Switch OFF Ucc    ";
+	actual_state = EVENT1;
+	TCNT1 = TSEQ;
+	uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
+	timer1_set_state(ENABLE);
+}
+
+void error(void)
+{
+	timer1_set_state(DISABLE);
+	if (fault_flag == 1)
+	{
+		pom = "nastala chyba       ";
+		uart_puts("Po stlaceni byla nastava chyba, nemohu se spustit\n");
+	}
+	else
+	{
+		pom = "Divny, Vse OK          ";
+		uart_puts("To je divny, vse je uz ok\n");
+	}
+}
+
 ISR(INT0_vect)
 {
     timer1_set_state(DISABLE);
@@ -65,22 +119,7 @@ ISR(TIMER1_OVF_vect)
     {
         case EVENT0:
             timer1_set_state(DISABLE);
-            if (way == 1)
-            {
-                pom = "Switch ON rel 2    ";
-                uart_puts("EVENT0 zapinam rele 2\n");
-                TCNT1 = TSEQ;
-                timer1_set_state(ENABLE);
-                actual_state = EVENT1;
-            }
-            else
-            {
-                pom = "Switch OFF rel 2    ";
-                uart_puts("EVENT0 vypinam rele 2\n");
-                TCNT1 = TREL;
-                actual_state = EVENT2;
-                timer1_set_state(ENABLE);
-            }
+            E0_on_relay2();
             break;
         case EVENT1:
             timer1_set_state(DISABLE);
