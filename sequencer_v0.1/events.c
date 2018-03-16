@@ -118,7 +118,7 @@ void fault_off_all(void)
 		// set Timer counter value register to time delay for block transmit
 		TCNT1 = TFAULT;
 		// number of repeats to achieve aim delay time about 20 seconds
-		// if first run, fault_count set to short time delay                       
+		// if first run, fault_count set to short time delay
 		fault_count++;
 		actual_state = FAULT;               // go to fault in ISR timer1
 		once = !once;                       // stop repeat this if-loop
@@ -126,8 +126,8 @@ void fault_off_all(void)
 	}
 	// if fault flag came from ADC, after previous loop jump here and repeats to FCOUNT
 	// FCOUNT is set to keep this block for 20 second
-	else if (fault_count < FCOUNT)          
-	{ 
+	else if (fault_count < FCOUNT)
+	{
 		TCNT1 = TFAULT;
 		fault_count++;
 		actual_state = FAULT;
@@ -148,17 +148,17 @@ void fault_off_all(void)
 		// in next version this test rule will not be used, and fault_flag will be set after AD conversion
 		fault_flag = 0;
 		// test setings
-		// this variable "once" will be set again after ADC               
+		// this variable "once" will be set again after ADC
 		once = 1;
 		timer1_set_state(ENABLE);                // run TIMER1
 	}
 }
 
 // this function set ADC on and check status of PA ability
-void after_fault_check_status(void)            
+void after_fault_check_status(void)
 {
 	timer1_set_state(DISABLE);
-	if (fault_flag >= 1)
+	if (fault_flag)
 	{
 		uart_puts("Pusteni ADC a cekani na komparaci, nyni simuluji ze vse OK pevnym nastavim fault_flag = 0\n");
 		pom = "SW&RD ADC a COMP    ";
@@ -204,7 +204,7 @@ void Event_PTT_button_status_changed(void)
 {
 	timer1_set_state(DISABLE);
 	TCNT1 = 64910;
-	if (once == 1)
+	if (once)
 	{
 		old_state = actual_state;
 		once = !once;
