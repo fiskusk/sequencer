@@ -11,8 +11,9 @@
 #include <avr/interrupt.h>
 
 #include "main.h"
-#include "uart.h"
 #include "lcd.h"
+#include "uart.h"
+#include "state.h"
 #include "events.h"
 
 uint8_t way = 0;
@@ -45,7 +46,7 @@ int main(void)
     pom = "Pok";
     uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
 	// when first started, jump to ISR from timer1 to execute routine of fault
-    TCNT1 = 65530;                                      
+    TCNT1 = 65530;
     fault_flag = 2;
     timer1_set_state(ENABLE);
     lcd_puts(pom);
