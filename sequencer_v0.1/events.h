@@ -20,12 +20,12 @@
 extern void Event_PTT_pushed_up_oN_relay1_oN_FAN(void);
 extern void Event_PTT_pushed_down_oFF_Ucc(void);
 extern void error(void);
-extern void E0_oNoFF_relay2(void);
-extern void E1_oNoFF_bias(void);
-extern void E2_oN_Ucc_oFF_relay1(void);
-extern void Fault_oFF_all(void);
-extern void After_Fault_check_status(void);
-extern void Test_state_of_PTT_button(void);
+extern void E0_on_off_relay2(void);
+extern void E1_on_off_bias(void);
+extern void E2_on_Ucc_off_relay1(void);
+extern void fault_off_all(void);
+extern void after_fault_check_status(void);
+extern void test_state_of_PTT_button(void);
 extern void Event_PTT_button_status_changed(void);
 // ========================================================
 

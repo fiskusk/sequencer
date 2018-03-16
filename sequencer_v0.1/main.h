@@ -18,7 +18,7 @@
 
 #define button_ptt_is_pressed() bit_is_clear(PIND,2)
 
-extern uint8_t way;
+extern uint8_t way;                 // variable distinguish, if PTT button is press or switch off 
 extern uint8_t fault_count;
 extern uint8_t fault_flag;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
 extern char *pom;

@@ -64,22 +64,22 @@ ISR(TIMER1_OVF_vect)
     switch(actual_state)
     {
         case EVENT0:
-            E0_oNoFF_relay2();
+            E0_on_off_relay2();
             break;
         case EVENT1:
-            E1_oNoFF_bias();
+            E1_on_off_bias();
             break;
         case EVENT2:
-            E2_oN_Ucc_oFF_relay1();
+            E2_on_Ucc_off_relay1();
             break;
         case FAULT:
-            Fault_oFF_all();
+            fault_off_all();
             break;
         case AFTER_FAULT:
-            After_Fault_check_status();
+            after_fault_check_status();
             break;
         case TEST_PTT:
-            Test_state_of_PTT_button();
+            test_state_of_PTT_button();
             break;
         default:
             actual_state = FAULT;

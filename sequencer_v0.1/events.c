@@ -43,7 +43,7 @@ void error(void)
 	}
 }
 
-void E0_oNoFF_relay2(void)
+void E0_on_off_relay2(void)
 {
 	timer1_set_state(DISABLE);
 	if (way == 1)
@@ -64,7 +64,7 @@ void E0_oNoFF_relay2(void)
 	}
 }
 
-void E1_oNoFF_bias(void)
+void E1_on_off_bias(void)
 {
 	timer1_set_state(DISABLE);
 	if (way == 1)
@@ -85,7 +85,7 @@ void E1_oNoFF_bias(void)
 	}
 }
 
-void E2_oN_Ucc_oFF_relay1(void)
+void E2_on_Ucc_off_relay1(void)
 {
 	timer1_set_state(DISABLE);
 	if (way == 1)
@@ -100,7 +100,7 @@ void E2_oN_Ucc_oFF_relay1(void)
     }
 }
 
-void Fault_oFF_all(void)
+void fault_off_all(void)
 {
 	timer1_set_state(DISABLE);                       // TIMER1 stops
 	button_ptt_set_irq(DISABLE);                     // ISR from PTT button disable, block transmit
@@ -155,7 +155,7 @@ void Fault_oFF_all(void)
 }
 
 // this function set ADC on and check status of PA ability
-void After_Fault_check_status(void)            
+void after_fault_check_status(void)            
 {
 	timer1_set_state(DISABLE);
 	if (fault_flag >= 1)
@@ -176,7 +176,7 @@ void After_Fault_check_status(void)
 	}
 }
 
-void Test_state_of_PTT_button(void)
+void test_state_of_PTT_button(void)
 {
 	timer1_set_state(DISABLE);
 	uart_puts("jsem v case PTT\n");
