@@ -6,6 +6,8 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
+#include "types.h"
+
 #define TSEQ 500       // Time of sequence
 #define TREL 5000      // Delay time after servo1 switch on
 #define TFAULT 0       // Time after fault * fault_count

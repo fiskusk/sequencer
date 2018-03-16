@@ -13,7 +13,7 @@
 #include "main.h"
 #include "lcd.h"
 #include "uart.h"
-#include "state.h"
+#include "types.h"
 #include "events.h"
 
 uint8_t way = 0;
