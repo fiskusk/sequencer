@@ -4,3 +4,4 @@ Release
 *.atsln
 *.cproj
 *.atsuo
+*.tags*
