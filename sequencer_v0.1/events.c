@@ -102,9 +102,9 @@ void E2_oN_Ucc_oFF_relay1(void)
 
 void Fault_oFF_all(void)
 {
-	timer1_set_state(DISABLE);
-	button_ptt_set_irq(DISABLE);
-	if (once == 1)
+	timer1_set_state(DISABLE);                       // TIMER1 stops
+	button_ptt_set_irq(DISABLE);                     // ISR from PTT button disable, block transmit
+	if (once == 1)                                   // do this only once - turn all down
 	{
 		uart_puts("nastal FAULT - FAULT postupne vse vypnu a drz?m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
 		pom = "Switch OFF Ucc     ";
@@ -115,14 +115,19 @@ void Fault_oFF_all(void)
 		_delay_ms(TREL);
 		pom = "switch OFF rel 1   ";
 		pom = "rozmrdals to       ";
+		// set Timer counter value register to time delay for block transmit
 		TCNT1 = TFAULT;
+		// number of repeats to achieve aim delay time about 20 seconds
+		// if first run, fault_count set to short time delay                       
 		fault_count++;
-		actual_state = FAULT;
-		once = !once;
-		timer1_set_state(ENABLE);
+		actual_state = FAULT;               // go to fault in ISR timer1
+		once = !once;                       // stop repeat this if-loop
+		timer1_set_state(ENABLE);           // set on timer1
 	}
-	else if (fault_count < FCOUNT)
-	{
+	// if fault flag came from ADC, after previous loop jump here and repeats to FCOUNT
+	// FCOUNT is set to keep this block for 20 second
+	else if (fault_count < FCOUNT)          
+	{ 
 		TCNT1 = TFAULT;
 		fault_count++;
 		actual_state = FAULT;
@@ -131,19 +136,26 @@ void Fault_oFF_all(void)
 		uart_puts("\n");
 		timer1_set_state(ENABLE);
 	}
+	// when accomplish previous rule, program jump here and set state to check status PA ability
 	else
 	{
 		uart_puts("jak probehne x opakovani FAULTu (v prvnim startu prednastaveny jenom na jedno projet?), pak zkontroluju jestli je uz vse OK SKOKEM na after FAULT\n");
 		pom = "Checking process   ";
 		actual_state = AFTER_FAULT;
-		TCNT1 = 65520;
-		fault_count = 0;
+		TCNT1 = 65520;                    // jump quickly to ISR Timer1 into AFTER_FAULT
+		// this is test test rule,
+		// means that everything is good and routine in ISR_TIMER1 AFTER_FAULT do nothing and unblock PA
+		// in next version this test rule will not be used, and fault_flag will be set after AD conversion
+		fault_flag = 0;
+		// test setings
+		// this variable "once" will be set again after ADC               
 		once = 1;
-		timer1_set_state(ENABLE);
+		timer1_set_state(ENABLE);                // run TIMER1
 	}
 }
 
-void After_Fault_check_status(void)
+// this function set ADC on and check status of PA ability
+void After_Fault_check_status(void)            
 {
 	timer1_set_state(DISABLE);
 	if (fault_flag >= 1)
