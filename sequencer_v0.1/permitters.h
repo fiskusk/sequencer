@@ -9,7 +9,7 @@
 #ifndef PERMITTERS_H_INCLUDED
 #define PERMITTERS_H_INCLUDED
 
-#include "state.h"
+#include "types.h"
 #include <avr/io.h>
 
 // ========================================================

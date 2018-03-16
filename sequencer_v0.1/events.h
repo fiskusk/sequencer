@@ -12,7 +12,7 @@
 #include <avr/interrupt.h>
 #include "uart.h"
 #include "main.h"
-#include "state.h"
+#include "types.h"
 #include "permitters.h"
 
 
