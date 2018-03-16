@@ -96,7 +96,7 @@ void E2_on_Ucc_off_relay1(void)
 	else
 	{
 		uart_puts("EVENT2 vypinam rele 1\n");
-	pom    = "Switch OFF rel 1";
+		pom = "Switch OFF rel 1";
     }
 }
 
