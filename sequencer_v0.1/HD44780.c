@@ -105,5 +105,5 @@ void toggle_e(void)
 {
     LCD_SetEnable();
     _delay_us(ENABLE_DELAY_PULSE);
-    LCD_SetEnable();
+    LCD_ClrEnable();
 }

@@ -18,6 +18,7 @@
 #define LCD_ClrEnable() PORTB &=~0x02;
 #define LCD_SetData() PORTB |= 0x01;      //PORTC0 is RS (Data H, command L) HW pin 23
 #define LCD_SetCommand() PORTB &=~0x01;
+
 #define DDR(x) (*(&x - 1))
 
 #define ENABLE_DELAY_PULSE 2                          // enable signal pulse width in micro seconds
