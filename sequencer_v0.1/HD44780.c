@@ -19,7 +19,7 @@ void lcd_init(void) // initialization of display
     DDR(LCD_Data) |= 0b00111111;
     _delay_ms(LCD_DELAY_BOOTUP);
     LCD_ClrEnable();
-    LCD_Data = 0b00001100;
+    LCD_WriteDC(0b00111000,0);
     toggle_e();
     _delay_us(LCD_DELAY_INIT);
     toggle_e();

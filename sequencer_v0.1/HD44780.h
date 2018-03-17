@@ -25,7 +25,9 @@
 #define LCD_DELAY_BOOTUP   16                         // delay in mili seconds after power-on  
 #define LCD_DELAY_INIT 5100                           // delay in micro seconds after initialization command sent 
 #define LCD_DELAY_INIT_REP 80                         // delay in micro seconds after initialization command repeated
-#define LCD_DELAY_INIT_4BIT 80                        //< delay in micro seconds after setting 4-bit mode 
+#define LCD_DELAY_INIT_4BIT 80                        // delay in micro seconds after setting 4-bit mode 
+
+
 
 
 //======================================================
