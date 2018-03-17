@@ -7,15 +7,25 @@
  */
 
 /* Headliners */
-#define F_CPU 16000000UL
-#include <avr/io.h>
-#include <util/delay.h>
+
 #include "HD44780.h"
+
+#ifndef F_CPU
+    #define F_CPU 16000000UL
+#endif
 
 void lcd_init(void) // initialization of display
 {
+    DDR(LCD_Data) |= 0b00111111;
+    _delay_ms(LCD_DELAY_BOOTUP);
     LCD_ClrEnable();
-    lcd_clrscr();
+    LCD_Data = 0b00001100;
+    toggle_e();
+    _delay_us(LCD_DELAY_INIT);
+    toggle_e();
+    _delay_us(LCD_DELAY_INIT_REP);
+    toggle_e();
+    _delay_us(LCD_DELAY_INIT_REP);
 
     // Function set
     // 0 0 1 DL N F x x DL0=4bit, DL1=8bit; N0=1lines, N1=2lines; F0=5×8dots, F1=5×10dots
@@ -43,8 +53,8 @@ void lcd_clrscr(void) // clear display and set position of cursor on default val
 
 void LCD_WriteDC(unsigned char val, unsigned char DC) // write a data or a command code to display
 {
-    if (DC == 0)
-        LCD_SetCommand();
+    if (DC == 0){
+        LCD_SetCommand();}
     else
         LCD_SetData();
     _delay_us(80);
@@ -89,4 +99,11 @@ void lcd_puts(const char *s) // draw on display a constant string
         LCD_WriteDC(*s, 1);
         s += 1;
     }
+}
+
+void toggle_e(void)
+{
+    LCD_SetEnable();
+    _delay_us(ENABLE_DELAY_PULSE);
+    LCD_SetEnable();
 }

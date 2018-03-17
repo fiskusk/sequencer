@@ -11,7 +11,7 @@
 #include <avr/interrupt.h>
 
 #include "main.h"
-#include "lcd.h"
+#include "HD44780.h"
 #include "uart.h"
 #include "events.h"
 
@@ -32,7 +32,7 @@ void setup(void)
     EICRA |= 1<<ISC00;     // any logical change INT0 generate interrupt
     TIMSK1 |= 1<<TOIE1;    // enable interrupt when overflow Timer
 
-    lcd_init(LCD_DISP_ON); // initialization display
+    lcd_init(); // initialization display
     lcd_clrscr();          // clear display
 
     uart_init();
@@ -48,9 +48,11 @@ int main(void)
     TCNT1 = 65530;
     fault_flag = 2;
     timer1_set_state(ENABLE);
-    lcd_puts(pom);
-    lcd_gotoxy(0,0);
-    while (1);
+    while (1)
+    {
+        lcd_puts("pokus");
+        lcd_gotoxy(0,0);
+    };
     return 0;
 }
 
