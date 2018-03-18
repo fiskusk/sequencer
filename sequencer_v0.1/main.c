@@ -32,6 +32,8 @@ char buffer[9], buffer2[9], buffer3[9];
 sequencer_t old_state;              
 sequencer_t actual_state = FAULT;   // default after start up device, go to fault event
 
+adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;
+
 void setup(void)
 {
     // setup ports
@@ -144,6 +146,37 @@ ISR(TIMER1_OVF_vect)
 ISR(ADC_vect)
 {
     cli();
+    ADMUX &= 0xF0;
+    switch (adc_active_channel)
+    {
+        case ADC_CHANNEL_SWR:
+            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_TEMP_HEATSINK:
+            adc_active_channel = ADC_CHANNEL_POWER;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_POWER:
+            adc_active_channel = ADC_CHANNEL_Ucc;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_Ucc:
+            adc_active_channel = ADC_CHANNEL_Icc;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_Icc:
+            adc_active_channel = ADC_CHANNEL_TEMP_INT;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_TEMP_INT:
+            adc_active_channel = ADC_CHANNEL_SWR;
+            ADMUX |= adc_active_channel;
+            break;
+        default:
+            adc_active_channel = ADC_CHANNEL_SWR;
+            
+        
     // test prints
        
     // conversion to display 

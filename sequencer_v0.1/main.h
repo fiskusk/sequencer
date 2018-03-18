@@ -23,5 +23,6 @@ extern uint8_t fault_flag;
 extern char *pom;
 extern sequencer_t old_state;
 extern sequencer_t actual_state;
+extern adc_channel_t adc_active_channel;
 
 #endif // MAIN_H_INCLUDED

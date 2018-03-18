@@ -23,6 +23,15 @@ typedef enum{
 	AFTER_FAULT,    
 	TEST_PTT        
 } sequencer_t;
+
+typedef enum {
+    ADC_CHANNEL_SWR = 0,
+    ADC_CHANNEL_TEMP_HEATSINK = 1,
+    ADC_CHANNEL_POWER = 2,
+    ADC_CHANNEL_Ucc = 3,
+    ADC_CHANNEL_Icc = 4,
+    ADC_CHANNEL_TEMP_INT = 8
+}adc_channel_t;
 // ========================================================
 
 #endif // STATE_H_INCLUDED 
