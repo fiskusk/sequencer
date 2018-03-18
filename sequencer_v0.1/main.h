@@ -12,7 +12,7 @@
 #define TREL 5000      // Delay between servo1 and servo2. They must switch simultaneously.
 #define TFAULT 0       // Preset register Timer1 aprox. fault * F_COUNT
 #define FCOUNT 10      // Indicate how many repeats will be in fault
-#define UMIN 0
+#define UMIN 50
 #define UMAX 1024
 
 #define button_ptt_is_pressed() bit_is_clear(PIND,2)

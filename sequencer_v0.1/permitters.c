@@ -25,5 +25,5 @@ void loop_repeat(state_t state)
 
 void adc_set_state(state_t state)
 {
-    (state == ENABLE) ? (ADCSRA = (1<<ADIE)) : (ADCSRA &= ~(1<<ADIE));
+    (state == ENABLE) ? (ADCSRA |= (1<<ADIE)) : (ADCSRA &= ~(1<<ADIE));
 }
