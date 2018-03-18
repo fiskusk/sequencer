@@ -8,18 +8,19 @@
 
 #include "types.h"
 
-#define TSEQ 500       // Time of sequence
-#define TREL 5000      // Delay time after servo1 switch on
-#define TFAULT 0       // Time after fault * fault_count
-#define FCOUNT 10       // Indicate how many repeat will be in fault
+#define TSEQ 500       // Time delay between of two sequence
+#define TREL 5000      // Delay between servo1 and servo2. They must switch simultaneously.
+#define TFAULT 0       // Preset register Timer1 aprox. fault * F_COUNT
+#define FCOUNT 10      // Indicate how many repeats will be in fault
+#define UMIN 0
+#define UMAX 1024
 
 #define button_ptt_is_pressed() bit_is_clear(PIND,2)
 
-extern uint8_t way;                 // variable distinguish, if PTT button is press or switch off
+extern uint8_t way;                 
 extern uint8_t fault_count;
-extern uint8_t fault_flag;           // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
+extern uint8_t fault_flag;           
 extern char *pom;
-extern uint8_t once;
 extern sequencer_t old_state;
 extern sequencer_t actual_state;
 

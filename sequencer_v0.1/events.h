@@ -1,6 +1,6 @@
 /*
  * events.h
- *
+ * Functions of each event
  * Created: 16.3.2018 15:18:14
  *  Author: fkla
  */
@@ -15,12 +15,16 @@
 #include "types.h"
 #include "permitters.h"
 
+/* Functions of each events. When PTT button status changed, 
+*  call function Event_PTT_button_status_changed(). 
+* First
+*/
 
 // ========================================================
-void Event_PTT_pushed_up_oN_relay1_oN_FAN(void);
-void Event_PTT_pushed_down_oFF_Ucc(void);
+void Event_PTT_pushed_up_oN_relay1_oN_FAN(void);    // next state - on relay2
+void Event_PTT_pushed_down_oFF_Ucc(void);           // next state - turn off bias
 void error(void);
-void E0_on_off_relay2(void);
+void E0_on_off_relay2(void);                        // next state - bias
 void E1_on_off_bias(void);
 void E2_on_Ucc_off_relay1(void);
 void fault_off_all(void);
