@@ -111,7 +111,7 @@ int main(void)
 
 ISR(INT0_vect)
 {
-    Event_PTT_button_status_changed(); 
+    event_PTT_button_status_changed(); 
 }
 
 ISR(TIMER1_OVF_vect)
@@ -147,25 +147,8 @@ ISR(ADC_vect)
     // test prints
        
     // conversion to display 
-    des_tvar = ADC;  
-    if ((ADC<UMIN) || (ADC>UMAX))
-    {
-        adc_set_state(DISABLE);
-        uart_puts("ADC hodnota mimo rozsah, generuji chybu\n");
-        actual_state = FAULT;
-        TIFR1 |= 1<<TOV1;
-        fault_flag = 1;
-        fault_count = 0;
-        timer1_set_state(ENABLE);
-    }
-    else if (fault_flag>0)
-    {
-        adc_set_state(DISABLE);
-        uart_puts("hodnota ADC je OK, vracim fault_flag = 0\n");
-        actual_state = AFTER_FAULT;
-        fault_flag = 0;
-        TIFR1 |= 1<<TOV1;
-        timer1_set_state(ENABLE);
-    }
+    des_tvar = ADC;
+    
+    processing_adc_data();
     sei();
 }

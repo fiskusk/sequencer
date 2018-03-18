@@ -6,7 +6,7 @@
 * Next state is EVENT0 - turn relay2. 
 * They should be turned on simultaneously with relay1.
 */
-void Event_PTT_pushed_up_oN_relay1_oN_FAN(void)
+void event_PTT_pushed_up_on_relay1_on_FAN(void)
 {
     timer1_set_state(DISABLE);
     pom = "sw rel1+turn fan   ";
@@ -23,7 +23,7 @@ void Event_PTT_pushed_up_oN_relay1_oN_FAN(void)
 * Event for PTT is pushed down and device turn off Ucc.
 * Next state is EVENT1 - (way = 0) turn off bias.
 */
-void Event_PTT_pushed_down_oFF_Ucc(void)
+void event_PTT_pushed_down_off_Ucc(void)
 {
     timer1_set_state(DISABLE);
     actual_state = EVENT1;
@@ -201,7 +201,7 @@ void test_state_of_PTT_button(void)
         uart_puts("zapinam\n");
         
         way = 1;                                   
-        Event_PTT_pushed_up_oN_relay1_oN_FAN();
+        event_PTT_pushed_up_on_relay1_on_FAN();
     }
     // if button is push down and at the same time was not fault or after_fault
     else if (!button_ptt_is_pressed() && actual_state != FAULT && actual_state != AFTER_FAULT)
@@ -210,7 +210,7 @@ void test_state_of_PTT_button(void)
         uart_puts("vypinam\n");
         
         way = 0;
-        Event_PTT_pushed_down_oFF_Ucc();
+        event_PTT_pushed_down_off_Ucc();
     }
     // when was fault or after_fault
     else
@@ -225,7 +225,7 @@ void test_state_of_PTT_button(void)
 * was pressed/push off or during these 30 seconds was button glitch.
 * According to this, it calls the appropriate functions.
 */
-void Event_PTT_button_status_changed(void)
+void event_PTT_button_status_changed(void)
 {
     timer1_set_state(DISABLE);
     TCNT1 = 64910;
@@ -237,4 +237,33 @@ void Event_PTT_button_status_changed(void)
     actual_state = TEST_PTT;
     uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
     timer1_set_state(ENABLE);
+}
+
+void processing_adc_data(void)
+{
+    char buffer4[9];
+    itoa(ADC,buffer4,10);
+    if ((ADC<UMIN) || (ADC>UMAX))
+    {
+        adc_set_state(DISABLE);
+        uart_puts("ADC hodnota ");
+        uart_puts(buffer4);
+        uart_puts(" je mimo rozsah, generuji fault flag\n");
+        actual_state = FAULT;
+        TIFR1 |= 1<<TOV1;
+        fault_flag = 1;
+        fault_count = 0;
+        timer1_set_state(ENABLE);
+    }
+    else if (fault_flag>0)
+    {
+        adc_set_state(DISABLE);
+        uart_puts("hodnota ADC ");
+        uart_puts(buffer4);
+        uart_puts(" je OK, vracim fault_flag = 0\n");
+        actual_state = AFTER_FAULT;
+        fault_flag = 0;
+        TIFR1 |= 1<<TOV1;
+        timer1_set_state(ENABLE);
+    }
 }
