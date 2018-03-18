@@ -175,18 +175,6 @@ void after_fault_check_status(void)
         pom = "Vse OK           ";
         button_ptt_set_irq(ENABLE);
         actual_state = EVENT0;
-        // setup ADC
-        // internally reference
-        // 0. external AREF (internal Vref disabled),
-        // 1. AVCC with external cap at AREF pin,
-        // 2. reserved
-        // 3. Internal 1,1V voltage ref. with external cap on AREF pin
-        ADMUX = (1<<REFS1) | (1<<REFS0);
-        
-        // ADENable, ADStart Conversion, ADInterrupt Enable
-        // when set ADATE - ADCH MSB, ADCL LSB
-        // ADPrescaler Select - 2,2,4,8,16,32,64,128
-        ADCSRA = (1<<ADEN) | (1<<ADSC) | (1<<ADATE) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2);
     }
     adc_set_state(ENABLE);
 }
