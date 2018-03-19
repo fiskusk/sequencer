@@ -1,10 +1,11 @@
 #ifndef EVENTS_H_INCLUDED
 #define EVENTS_H_INCLUDED
 
+#include "settings.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "uart.h"
-#include "settings.h"
+#include "main.h"
 #include "types.h"
 #include "permitters.h"
 
