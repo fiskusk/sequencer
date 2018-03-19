@@ -11,6 +11,7 @@
 #include "uart.h"           // library for UART to debuging
 #include "events.h"         // library functions for events
 #include "adc.h"
+#include "ptt.h"
 
 // global variables
 uint8_t way = 0;                    // default way is to turning off (normally when PTT push off)
@@ -34,14 +35,13 @@ void setup(void)
 {
     // setup ports
     DDRB |= 0b01111111;    // set display pins as output (H output)
-    DDRD &= ~(1<<2);       // INT0 as input (L)
-    PORTD |= 1<<2;         // INT0 H pull-up, L Hi-impedance
     DDRC = (1<<5) | (1<<6);        // set PORTC5 as output
 
     // setup TIMER1
     EICRA |= 1<<ISC00;     // any logical change INT0 generate interrupt
     TIMSK1 |= 1<<TOIE1;    // enable interrupt when overflow Timer1
 
+    ptt_init();
     adc_init();
 
     // setup LCD and UART

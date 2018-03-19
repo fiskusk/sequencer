@@ -11,6 +11,6 @@
 #include "permitters.h"
 
 
-
+void ptt_init(void);
 
 #endif // PTT_H_INCLUDED
