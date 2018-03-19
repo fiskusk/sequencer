@@ -99,10 +99,7 @@ result_t adc_check_limits(void)
         TIFR1       |= 1 << TOV1;
         timer1_set_state(ENABLE);
     }
-    else if (fault_flag == 0 || fault_flag == 3)
-    {
 
-    }
 }*/
 
 ISR(ADC_vect)
