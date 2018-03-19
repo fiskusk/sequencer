@@ -5,3 +5,8 @@ Release
 *.cproj
 *.atsuo
 *.tags*
+*.o
+*.list
+*.lss
+*.elf
+*.hex
