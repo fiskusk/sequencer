@@ -26,9 +26,6 @@ uint8_t once_fault_event;
 uint8_t once_ptt_event;
 
 
-
-
-
 sequencer_t old_state;                                  // backup enum types
 sequencer_t actual_state = FAULT;                       // default after start up device, go to fault event
 
@@ -139,12 +136,6 @@ ISR(TIMER1_OVF_vect)
 ISR(ADC_vect)
 {
     cli();
-
-    // test prints
-
-    // conversion to display
-
-    processing_adc_data();
-
+    adc_processing_data();
     sei();
 }

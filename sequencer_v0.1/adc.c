@@ -3,14 +3,14 @@
 #define UMIN   0
 #define UMAX   600
 
-volatile adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
+adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
 
-volatile uint16_t adc_swr;
-volatile uint16_t adc_ucc;
-volatile uint16_t adc_icc;
-volatile uint16_t adc_power;
-volatile uint16_t adc_temp_int;
-volatile uint16_t adc_temp_heatsink;
+uint16_t adc_swr;
+uint16_t adc_ucc;
+uint16_t adc_icc;
+uint16_t adc_power;
+uint16_t adc_temp_int;
+uint16_t adc_temp_heatsink;
 
 void adc_init(void)
 {
