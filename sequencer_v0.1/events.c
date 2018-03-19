@@ -3,7 +3,7 @@
 /*
 * Event for PTT is pushed up and device turn relay1
 * and FAN independently directly.
-* Next state is EVENT0 - turn relay2. 
+* Next state is EVENT0 - turn relay2.
 * They should be turned on simultaneously with relay1.
 */
 void event_PTT_pushed_up_on_relay1_on_FAN(void)
@@ -12,10 +12,10 @@ void event_PTT_pushed_up_on_relay1_on_FAN(void)
     pom = "sw rel1+turn fan   ";
     actual_state = EVENT0;
     TCNT1        = TREL;
-    
+
     // test prints
     uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
-    
+
     timer1_set_state(ENABLE);
 }
 
@@ -28,11 +28,11 @@ void event_PTT_pushed_down_off_Ucc(void)
     timer1_set_state(DISABLE);
     actual_state = EVENT1;
     TCNT1        = TSEQ;
-    
+
     // test prints
     pom = "Switch OFF Ucc    ";
     uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
-    
+
     timer1_set_state(ENABLE);
 }
 
@@ -42,11 +42,11 @@ void event_PTT_pushed_down_off_Ucc(void)
 void error(void)
 {
     timer1_set_state(DISABLE);
-    
+
     // test prints
     uart_puts("Tlacis ale nezapnu se, mam poruchu\n");
     pom = "nastala chyba       ";
-    
+
     button_ptt_set_irq(DISABLE);        // deny next PTT interrupt
     actual_state = FAULT;                // next EVENT will be FAULT
     TCNT1 = 65520;                      // jump immediately o ISR_TIMER1
@@ -118,20 +118,20 @@ void E2_on_Ucc_off_relay1(void)
 void test_state_of_PTT_button(void)
 {
     timer1_set_state(DISABLE);
-    
+
     // test prints
     uart_puts("jsem v case PTT\n");
-    
+
     // recover main statement
     actual_state = old_state;
-    
+
     // if button is pressed and at the same time was not fault or after_fault
     if (button_ptt_is_pressed() && actual_state != FAULT && actual_state != AFTER_FAULT)
     {
         //test prints
         uart_puts("zapinam\n");
-        
-        way = 1;                                   
+
+        way = 1;
         event_PTT_pushed_up_on_relay1_on_FAN();
     }
     // if button is push down and at the same time was not fault or after_fault
@@ -139,7 +139,7 @@ void test_state_of_PTT_button(void)
     {
         // test prints
         uart_puts("vypinam\n");
-        
+
         way = 0;
         event_PTT_pushed_down_off_Ucc();
     }
@@ -150,7 +150,7 @@ void test_state_of_PTT_button(void)
     }
 }
 
-/* In this function set TIMER1 to achieve 10ms delay 
+/* In this function set TIMER1 to achieve 10ms delay
 *  after change status of button and set state TEST_PTT.
 * State TEST_PTT deciding, if button after three 10ms sequence
 * was pressed/push off or during these 30 seconds was button glitch.
@@ -174,15 +174,15 @@ void fault_off_all(void)
 {
     timer1_set_state(DISABLE);   // TIMER1 stops
     button_ptt_set_irq(DISABLE); // ISR from PTT button disable, block transmit
-    if (once_fault_event == 1 && ((fault_flag == 1) || (fault_flag == 2)))                    // do this only once - turn all down if fault 
+    if (once_fault_event == 1 && ((fault_flag == 1) || (fault_flag == 2)))                    // do this only once - turn all down if fault
     {
         //PORTC ^= (1<<5);
         uart_puts("nastal FAULT - FAULT postupne vse vypnu a drz?m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
         fault_flag = 3;                 // set fault flag to after_fault state
         adc_set_state(ENABLE);
-        
+
         // test prints
-        
+
 
         // set Timer counter value register to time delay for block transmit
         TCNT1 = TFAULT;
@@ -190,7 +190,7 @@ void fault_off_all(void)
         // if first run, fault_count set to short time delay
         fault_count++;
         actual_state = FAULT;     // go to fault in ISR timer1
-        
+
         once_fault_event = loop_repeat(DISABLE);
         timer1_set_state(ENABLE); // set on timer1
     }
@@ -201,12 +201,12 @@ void fault_off_all(void)
         TCNT1 = TFAULT;
         fault_count++;
         actual_state = FAULT;       // still hold here
-        
+
         // test prints
         uart_puts("FAULT_count: ");
         uart_putc(fault_count);
         uart_puts("\n");
-        
+
         timer1_set_state(ENABLE);
     }
     // when accomplish previous rule, program jump here and set state to check status PA ability
@@ -214,9 +214,9 @@ void fault_off_all(void)
     {
         // test prints
         uart_puts("vse vypnuto, delay dosahnut. Nasleduje kontrola v AFTER_FAULT\n");
-        
+
         actual_state = AFTER_FAULT;     // go to test device
-             
+
         once_fault_event = loop_repeat(ENABLE);
         TIFR1 |= 1<<TOV1;      // jump quickly to ISR Timer1 into AFTER_FAULT
         timer1_set_state(ENABLE); // run TIMER1
@@ -232,7 +232,7 @@ void after_fault_check_status(void)
         fault_flag = 1;
         uart_puts("Byla chyba, kontrola jestli je vse OK\n");
         pom = "SW&RD ADC a COMP    ";
-        
+
     }
     else
     {
@@ -272,48 +272,38 @@ void processing_adc_data(void)
         TIFR1 |= 1<<TOV1;
         timer1_set_state(ENABLE);
     }
-    else if ((fault_flag == 0) || (fault_flag == 3))
+    else if (fault_flag == 0 || fault_flag == 3)
     {
-        ADMUX &= 0xF0;
         switch (adc_active_channel) {
         case ADC_CHANNEL_SWR:
-            //PORTC ^= (1<<5);
             ADC_TEMP_INT = ADC;
             adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
-            ADMUX |= adc_active_channel;
             break;
         case ADC_CHANNEL_TEMP_HEATSINK:
             ADC_SWR = ADC;
             adc_active_channel = ADC_CHANNEL_POWER;
-            ADMUX |= adc_active_channel;
             break;
         case ADC_CHANNEL_POWER:
             PORTC ^= (1<<5);
             ADC_TEMP_HEATSINK = ADC;
             adc_active_channel = ADC_CHANNEL_Ucc;
-            ADMUX |= adc_active_channel;
             break;
         case ADC_CHANNEL_Ucc:
             ADC_POWER = ADC;
             adc_active_channel = ADC_CHANNEL_Icc;
-            ADMUX |= adc_active_channel;
             break;
         case ADC_CHANNEL_Icc:
             ADC_Ucc = ADC;
             adc_active_channel = ADC_CHANNEL_TEMP_INT;
-            ADMUX |= adc_active_channel;
             break;
         case ADC_CHANNEL_TEMP_INT:
             ADC_Icc = ADC;
             adc_active_channel = ADC_CHANNEL_SWR;
-            ADMUX |= adc_active_channel;
             break;
         default:
             adc_active_channel = ADC_CHANNEL_SWR;
             break;
         }
     }
-    
-    
-    
+    ADMUX = ADMUX & 0xF0 | adc_active_channel;
 }
