@@ -132,10 +132,3 @@ ISR(TIMER1_OVF_vect)
             break;
     }
 }
-
-ISR(ADC_vect)
-{
-    cli();
-    adc_processing_data();
-    sei();
-}

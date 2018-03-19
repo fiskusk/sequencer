@@ -92,3 +92,10 @@ void adc_processing_data(void)
     }
     ADMUX = (ADMUX & 0xF0) | adc_active_channel;
 } /* processing_adc_data */
+
+ISR(ADC_vect)
+{
+    cli();
+    adc_processing_data();
+    sei();
+}
