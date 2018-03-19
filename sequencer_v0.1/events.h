@@ -4,7 +4,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "uart.h"
-#include "setting.h"
+#include "settings.h"
 #include "types.h"
 #include "permitters.h"
 
