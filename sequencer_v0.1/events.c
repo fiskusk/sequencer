@@ -305,5 +305,5 @@ void processing_adc_data(void)
                 break;
         }
     }
-    ADMUX = ADMUX & 0xF0 | adc_active_channel;
+    ADMUX = (ADMUX & 0xF0) | adc_active_channel;
 } /* processing_adc_data */
