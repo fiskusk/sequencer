@@ -23,6 +23,7 @@ extern uint16_t adc_temp_int;
 extern uint16_t adc_temp_heatsink;
 
 
+void adc_init(void);
 void adc_processing_data(void);
 
 
