@@ -1,13 +1,3 @@
-/*
- * Name: HD44780.c
- * Chip: ATMega328p
- * Created: 10.3.2018 20:11:55
- * Author : KLAPIL Filip (Assumed from POSPISIlL Frantisek)
- * Hardware: HD44780 4 bit bus
- */
-
-/* Headliners */
-
 #include "HD44780.h"
 
 #ifndef F_CPU

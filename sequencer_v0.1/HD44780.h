@@ -1,15 +1,6 @@
-/*
- * Name: HD44780.h
- * Chip: ATMega328p
- * Created: 10.3.2018 20:11:55
- * Author : KLAPIL Filip
- * Hardware: HD44780 4 bit bus
- */
-
- /* define of macros */
 #ifndef HD44780_H_INCLUDED
 #define HD44780_H_INCLUDED
- 
+
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -22,10 +13,10 @@
 #define DDR(x) (*(&x - 1))
 
 #define ENABLE_DELAY_PULSE 2                          // enable signal pulse width in micro seconds
-#define LCD_DELAY_BOOTUP   16                         // delay in mili seconds after power-on  
-#define LCD_DELAY_INIT 5100                           // delay in micro seconds after initialization command sent 
+#define LCD_DELAY_BOOTUP   16                         // delay in mili seconds after power-on
+#define LCD_DELAY_INIT 5100                           // delay in micro seconds after initialization command sent
 #define LCD_DELAY_INIT_REP 80                         // delay in micro seconds after initialization command repeated
-#define LCD_DELAY_INIT_4BIT 80                        // delay in micro seconds after setting 4-bit mode 
+#define LCD_DELAY_INIT_4BIT 80                        // delay in micro seconds after setting 4-bit mode
 
 
 
@@ -40,5 +31,3 @@ extern void lcd_puts(const char *s);                               // draw on di
 //======================================================
 
 #endif //HD44780_H_INCLUDED
-
-
