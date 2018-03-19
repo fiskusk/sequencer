@@ -1,7 +1,7 @@
 #include "adc.h"
 
 #define ADC_SWR_VOLTAGE_MIN     0
-#define ADC_SWR_VOLTAGE_UMAX    600
+#define ADC_SWR_VOLTAGE_MAX    600
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
 
@@ -76,7 +76,7 @@ result_t adc_check_limits(void)
     if (adc_swr < ADC_SWR_VOLTAGE_MIN || adc_swr > ADC_SWR_VOLTAGE_MAX)
         return ERROR;
 
-    return SUCCES;
+    return SUCCESS;
 }
     /*{
         // uart_puts("ADC hodnota ");
@@ -109,6 +109,6 @@ ISR(ADC_vect)
 {
     cli();
     adc_get_data();
-    adc_check_data();
+    adc_check_limits();
     sei();
 }

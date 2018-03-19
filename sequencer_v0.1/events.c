@@ -10,7 +10,7 @@ void event_PTT_pushed_up_on_relay1_on_FAN(void)
 {
     timer1_set_state(DISABLE);
     pom = "sw rel1+turn fan   ";
-    actual_state = EVENT0;
+    machine_state = EVENT0;
     TCNT1        = TREL;
 
     // test prints
@@ -26,7 +26,7 @@ void event_PTT_pushed_up_on_relay1_on_FAN(void)
 void event_PTT_pushed_down_off_Ucc(void)
 {
     timer1_set_state(DISABLE);
-    actual_state = EVENT1;
+    machine_state = EVENT1;
     TCNT1        = TSEQ;
 
     // test prints
@@ -48,7 +48,7 @@ void error(void)
     pom = "nastala chyba       ";
 
     button_ptt_set_irq(DISABLE); // deny next PTT interrupt
-    actual_state = FAULT;        // next EVENT will be FAULT
+    machine_state = FAULT;        // next EVENT will be FAULT
     TCNT1        = 65520;        // jump immediately o ISR_TIMER1
     timer1_set_state(ENABLE);
 }
@@ -62,14 +62,14 @@ void E0_on_off_relay2(void)
         uart_puts("EVENT0 zapinam rele 2\n");
         TCNT1 = TSEQ;
         timer1_set_state(ENABLE);
-        actual_state = EVENT1;
+        machine_state = EVENT1;
     }
     else
     {
         pom = "Switch OFF rel 2    ";
         uart_puts("EVENT0 vypinam rele 2\n");
         TCNT1        = TREL;
-        actual_state = EVENT2;
+        machine_state = EVENT2;
         timer1_set_state(ENABLE);
     }
 }
@@ -83,7 +83,7 @@ void E1_on_off_bias(void)
         uart_puts("EVENT1 zapinam bias\n");
         TCNT1 = TSEQ;
         timer1_set_state(ENABLE);
-        actual_state = EVENT2;
+        machine_state = EVENT2;
     }
     else
     {
@@ -91,7 +91,7 @@ void E1_on_off_bias(void)
         uart_puts("EVENT 1  vypinam bias\n");
         TCNT1 = TSEQ;
         timer1_set_state(ENABLE);
-        actual_state = EVENT0;
+        machine_state = EVENT0;
     }
 }
 
@@ -123,10 +123,10 @@ void test_state_of_PTT_button(void)
     uart_puts("jsem v case PTT\n");
 
     // recover main statement
-    actual_state = old_state;
+    machine_state = old_state;
 
     // if button is pressed and at the same time was not fault or after_fault
-    if (button_ptt_is_pressed() && actual_state != FAULT && actual_state != AFTER_FAULT)
+    if (button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
         // test prints
         uart_puts("zapinam\n");
@@ -135,7 +135,7 @@ void test_state_of_PTT_button(void)
         event_PTT_pushed_up_on_relay1_on_FAN();
     }
     // if button is push down and at the same time was not fault or after_fault
-    else if (!button_ptt_is_pressed() && actual_state != FAULT && actual_state != AFTER_FAULT)
+    else if (!button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
         // test prints
         uart_puts("vypinam\n");
@@ -162,10 +162,10 @@ void event_PTT_button_status_changed(void)
     TCNT1 = 64910;
     if (once_ptt_event == 1)
     {
-        old_state      = actual_state;
+        old_state      = machine_state;
         once_ptt_event = loop_repeat(DISABLE);
     }
-    actual_state = TEST_PTT;
+    machine_state = TEST_PTT;
     uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
     timer1_set_state(ENABLE);
 }
@@ -189,7 +189,7 @@ void fault_off_all(void)
         // number of repeats to achieve aim delay time about 20 seconds
         // if first run, fault_count set to short time delay
         fault_count++;
-        actual_state = FAULT; // go to fault in ISR timer1
+        machine_state = FAULT; // go to fault in ISR timer1
 
         once_fault_event = loop_repeat(DISABLE);
         timer1_set_state(ENABLE); // set on timer1
@@ -200,7 +200,7 @@ void fault_off_all(void)
     {
         TCNT1 = TFAULT;
         fault_count++;
-        actual_state = FAULT; // still hold here
+        machine_state = FAULT; // still hold here
 
         // test prints
         uart_puts("FAULT_count: ");
@@ -215,7 +215,7 @@ void fault_off_all(void)
         // test prints
         uart_puts("vse vypnuto, delay dosahnut. Nasleduje kontrola v AFTER_FAULT\n");
 
-        actual_state = AFTER_FAULT; // go to test device
+        machine_state = AFTER_FAULT; // go to test device
 
         once_fault_event = loop_repeat(ENABLE);
         TIFR1 |= 1 << TOV1;       // jump quickly to ISR Timer1 into AFTER_FAULT
@@ -238,6 +238,6 @@ void after_fault_check_status(void)
         uart_puts("Vse je OK, nyni je povoleno PTT\n");
         pom = "Vse OK           ";
         button_ptt_set_irq(ENABLE);
-        actual_state = EVENT0;
+        machine_state = EVENT0;
     }
 }

@@ -10,7 +10,7 @@ typedef enum {
 
 typedef enum {
 	SUCCESS = 1,
-	ERROR = !SUCCES,
+	ERROR = !SUCCESS,
 } result_t;
 
 typedef enum{

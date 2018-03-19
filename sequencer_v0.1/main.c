@@ -27,7 +27,7 @@ uint8_t once_ptt_event;
 
 
 sequencer_t old_state;                                  // backup enum types
-sequencer_t actual_state = FAULT;                       // default after start up device, go to fault event
+sequencer_t machine_state = FAULT;                       // default after start up device, go to fault event
 
 
 void setup(void)
@@ -107,7 +107,7 @@ ISR(INT0_vect)
 
 ISR(TIMER1_OVF_vect)
 {
-    switch(actual_state)
+    switch(machine_state)
     {
         case EVENT0:
             E0_on_off_relay2();
@@ -128,7 +128,7 @@ ISR(TIMER1_OVF_vect)
             test_state_of_PTT_button();
             break;
         default:
-            actual_state = FAULT;
+            machine_state = FAULT;
             break;
     }
 }
