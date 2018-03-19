@@ -1,7 +1,7 @@
 #include "adc.h"
 
-#define UMIN   0
-#define UMAX   600
+#define ADC_SWR_VOLTAGE_MIN     0
+#define ADC_SWR_VOLTAGE_UMAX    600
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
 
@@ -30,15 +30,55 @@ void adc_init(void)
     PRR &= ~(1<<PRADC);
 }
 
-void adc_processing_data(void)
+void adc_get_data(void)
 {
-    if (fault_flag == 2) // if first run after start up device, read ADC value as ADC_SWR
+    switch (adc_active_channel)
     {
-        uart_puts("first start - copy ADC to ADC_SWR\n");
-        adc_swr = ADC;
+        case ADC_CHANNEL_SWR:
+            adc_swr = ADC;
+            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+            break;
+        case ADC_CHANNEL_TEMP_HEATSINK:
+            adc_temp_heatsink  = ADC;
+            adc_active_channel = ADC_CHANNEL_POWER;
+            break;
+        case ADC_CHANNEL_POWER:
+            PORTC    ^= (1 << 5);
+            adc_power = ADC;
+            adc_active_channel = ADC_CHANNEL_UCC;
+            break;
+        case ADC_CHANNEL_UCC:
+            adc_ucc = ADC;
+            adc_active_channel = ADC_CHANNEL_ICC;
+            break;
+        case ADC_CHANNEL_ICC:
+            adc_icc = ADC;
+            adc_active_channel = ADC_CHANNEL_TEMP_INT;
+            break;
+        case ADC_CHANNEL_TEMP_INT:
+            adc_temp_int       = ADC;
+            adc_active_channel = ADC_CHANNEL_SWR;
+            break;
     }
-    if (((adc_swr < UMIN) || (adc_swr > UMAX)) && ((fault_flag == 0) || (fault_flag == 1)))
-    {
+    ADMUX = (ADMUX & 0xF0) | adc_active_channel;
+} /* processing_adc_data */
+
+/*
+    fault_flag
+    0 - bez chyby
+    1 - chaba
+    2 - po spuštění
+    3 - stav po chybě
+*/
+
+result_t adc_check_limits(void)
+{
+    if (adc_swr < ADC_SWR_VOLTAGE_MIN || adc_swr > ADC_SWR_VOLTAGE_MAX)
+        return ERROR;
+
+    return SUCCES;
+}
+    /*{
         // uart_puts("ADC hodnota ");
         // uart_puts(buffer4);
         // uart_puts(" je mimo rozsah, generuji fault flag\n");
@@ -61,41 +101,14 @@ void adc_processing_data(void)
     }
     else if (fault_flag == 0 || fault_flag == 3)
     {
-        switch (adc_active_channel)
-        {
-            case ADC_CHANNEL_SWR:
-                adc_swr = ADC;
-                adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
-                break;
-            case ADC_CHANNEL_TEMP_HEATSINK:
-                adc_temp_heatsink  = ADC;
-                adc_active_channel = ADC_CHANNEL_POWER;
-                break;
-            case ADC_CHANNEL_POWER:
-                PORTC    ^= (1 << 5);
-                adc_power = ADC;
-                adc_active_channel = ADC_CHANNEL_UCC;
-                break;
-            case ADC_CHANNEL_UCC:
-                adc_ucc = ADC;
-                adc_active_channel = ADC_CHANNEL_ICC;
-                break;
-            case ADC_CHANNEL_ICC:
-                adc_icc = ADC;
-                adc_active_channel = ADC_CHANNEL_TEMP_INT;
-                break;
-            case ADC_CHANNEL_TEMP_INT:
-                adc_temp_int       = ADC;
-                adc_active_channel = ADC_CHANNEL_SWR;
-                break;
-        }
+
     }
-    ADMUX = (ADMUX & 0xF0) | adc_active_channel;
-} /* processing_adc_data */
+}*/
 
 ISR(ADC_vect)
 {
     cli();
-    adc_processing_data();
+    adc_get_data();
+    adc_check_data();
     sei();
 }

@@ -6,7 +6,12 @@
 typedef enum {
 	ENABLE = 1,
 	DISABLE = !ENABLE,
-}state_t;
+} state_t;
+
+typedef enum {
+	SUCCESS = 1,
+	ERROR = !SUCCES,
+} result_t;
 
 typedef enum{
 	EVENT0,
