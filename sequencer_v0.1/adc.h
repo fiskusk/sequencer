@@ -4,6 +4,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "types.h"
+#include "main.h"
 
 typedef enum {
     ADC_CHANNEL_SWR           = 0,
