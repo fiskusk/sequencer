@@ -27,11 +27,11 @@ extern adc_channel_t adc_active_channel;
 extern uint8_t once_fault_event;
 extern uint8_t once_PTT_event;
 
-extern uint16_t ADC_SWR;
-extern uint16_t ADC_TEMP_HEATSINK;
-extern uint16_t ADC_POWER;
-extern uint16_t ADC_Ucc;
-extern uint16_t ADC_Icc;
-extern uint16_t ADC_TEMP_INT;
+extern uint16_t adc_swr;
+extern uint16_t adc_temp_heatsink;
+extern uint16_t adc_power;
+extern uint16_t adc_ucc;
+extern uint16_t adc_icc;
+extern uint16_t adc_temp_int;
 
 #endif // MAIN_H_INCLUDED

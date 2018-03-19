@@ -31,12 +31,12 @@ char buffer[9], buffer2[9], buffer3[9];
 uint8_t once_fault_event;
 uint8_t once_PTT_event;
 
-uint16_t ADC_SWR;
-uint16_t ADC_TEMP_HEATSINK;
-uint16_t ADC_POWER;
-uint16_t ADC_Ucc;
-uint16_t ADC_Icc;
-uint16_t ADC_TEMP_INT;
+uint16_t adc_swr;
+uint16_t adc_temp_heatsink;
+uint16_t adc_power;
+uint16_t adc_ucc;
+uint16_t adc_icc;
+uint16_t adc_temp_int;
 
 
                    
@@ -105,10 +105,10 @@ int main(void)
         lcd_puts("    ");
         lcd_gotoxy(0,1);
         //for (uint8_t i = 0,i<=)
-        itoa(ADC_POWER,buffer3,10);
+        itoa(adc_power,buffer3,10);
         lcd_puts(buffer3);
         
-        des_tvar = (ADC_POWER*1.133)/1024.0;
+        des_tvar = (adc_power*1.133)/1024.0;
         cela_cast = des_tvar;
         desetinna = (des_tvar - (float)cela_cast)*1000;
         itoa(desetinna,buffer2,10);

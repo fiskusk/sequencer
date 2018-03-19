@@ -247,9 +247,9 @@ void processing_adc_data(void)
     if (fault_flag == 2) // if first run after start up device, read ADC value as ADC_SWR
     {
         uart_puts("first start - copy ADC to ADC_SWR\n");
-        ADC_SWR = ADC;
+        adc_swr = ADC;
     }
-    if (((ADC_SWR < UMIN) || (ADC_SWR > UMAX)) && ((fault_flag == 0) || (fault_flag == 1)))
+    if (((adc_swr < UMIN) || (adc_swr > UMAX)) && ((fault_flag == 0) || (fault_flag == 1)))
     {
         // uart_puts("ADC hodnota ");
         // uart_puts(buffer4);
@@ -276,28 +276,28 @@ void processing_adc_data(void)
         switch (adc_active_channel)
         {
             case ADC_CHANNEL_SWR:
-                ADC_TEMP_INT       = ADC;
+                adc_temp_int       = ADC;
                 adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
                 break;
             case ADC_CHANNEL_TEMP_HEATSINK:
-                ADC_SWR = ADC;
+                adc_swr = ADC;
                 adc_active_channel = ADC_CHANNEL_POWER;
                 break;
             case ADC_CHANNEL_POWER:
                 PORTC ^= (1 << 5);
-                ADC_TEMP_HEATSINK  = ADC;
+                adc_temp_heatsink  = ADC;
                 adc_active_channel = ADC_CHANNEL_Ucc;
                 break;
             case ADC_CHANNEL_Ucc:
-                ADC_POWER = ADC;
+                adc_power = ADC;
                 adc_active_channel = ADC_CHANNEL_Icc;
                 break;
             case ADC_CHANNEL_Icc:
-                ADC_Ucc = ADC;
+                adc_ucc = ADC;
                 adc_active_channel = ADC_CHANNEL_TEMP_INT;
                 break;
             case ADC_CHANNEL_TEMP_INT:
-                ADC_Icc = ADC;
+                adc_icc = ADC;
                 adc_active_channel = ADC_CHANNEL_SWR;
                 break;
             default:
