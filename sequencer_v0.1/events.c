@@ -160,10 +160,10 @@ void event_PTT_button_status_changed(void)
 {
     timer1_set_state(DISABLE);
     TCNT1 = 64910;
-    if (once_PTT_event == 1)
+    if (once_ptt_event == 1)
     {
         old_state      = actual_state;
-        once_PTT_event = loop_repeat(DISABLE);
+        once_ptt_event = loop_repeat(DISABLE);
     }
     actual_state = TEST_PTT;
     uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
@@ -286,13 +286,13 @@ void processing_adc_data(void)
             case ADC_CHANNEL_POWER:
                 PORTC ^= (1 << 5);
                 adc_temp_heatsink  = ADC;
-                adc_active_channel = ADC_CHANNEL_Ucc;
+                adc_active_channel = ADC_CHANNEL_UCC;
                 break;
-            case ADC_CHANNEL_Ucc:
+            case ADC_CHANNEL_UCC:
                 adc_power = ADC;
-                adc_active_channel = ADC_CHANNEL_Icc;
+                adc_active_channel = ADC_CHANNEL_ICC;
                 break;
-            case ADC_CHANNEL_Icc:
+            case ADC_CHANNEL_ICC:
                 adc_ucc = ADC;
                 adc_active_channel = ADC_CHANNEL_TEMP_INT;
                 break;

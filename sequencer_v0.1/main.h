@@ -25,7 +25,7 @@ extern sequencer_t old_state;
 extern sequencer_t actual_state;
 extern adc_channel_t adc_active_channel;
 extern uint8_t once_fault_event;
-extern uint8_t once_PTT_event;
+extern uint8_t once_ptt_event;
 
 extern uint16_t adc_swr;
 extern uint16_t adc_temp_heatsink;

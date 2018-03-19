@@ -29,7 +29,7 @@ volatile uint16_t desetinna = 0;
 volatile float des_tvar = 0;
 char buffer[9], buffer2[9], buffer3[9];
 uint8_t once_fault_event;
-uint8_t once_PTT_event;
+uint8_t once_ptt_event;
 
 uint16_t adc_swr;
 uint16_t adc_temp_heatsink;
