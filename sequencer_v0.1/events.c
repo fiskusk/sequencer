@@ -276,31 +276,28 @@ void processing_adc_data(void)
         switch (adc_active_channel)
         {
             case ADC_CHANNEL_SWR:
-                adc_temp_int       = ADC;
+                adc_swr = ADC;
                 adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
                 break;
             case ADC_CHANNEL_TEMP_HEATSINK:
-                adc_swr = ADC;
+                adc_temp_heatsink  = ADC;
                 adc_active_channel = ADC_CHANNEL_POWER;
                 break;
             case ADC_CHANNEL_POWER:
-                PORTC ^= (1 << 5);
-                adc_temp_heatsink  = ADC;
+                PORTC    ^= (1 << 5);
+                adc_power = ADC;
                 adc_active_channel = ADC_CHANNEL_UCC;
                 break;
             case ADC_CHANNEL_UCC:
-                adc_power = ADC;
+                adc_ucc = ADC;
                 adc_active_channel = ADC_CHANNEL_ICC;
                 break;
             case ADC_CHANNEL_ICC:
-                adc_ucc = ADC;
+                adc_icc = ADC;
                 adc_active_channel = ADC_CHANNEL_TEMP_INT;
                 break;
             case ADC_CHANNEL_TEMP_INT:
-                adc_icc = ADC;
-                adc_active_channel = ADC_CHANNEL_SWR;
-                break;
-            default:
+                adc_temp_int       = ADC;
                 adc_active_channel = ADC_CHANNEL_SWR;
                 break;
         }
