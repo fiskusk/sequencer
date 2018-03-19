@@ -110,75 +110,6 @@ void E2_on_Ucc_off_relay1(void)
     }
 }
 
-void fault_off_all(void)
-{
-    adc_set_state(DISABLE);
-    timer1_set_state(DISABLE);   // TIMER1 stops
-    button_ptt_set_irq(DISABLE); // ISR from PTT button disable, block transmit
-    if (loop_enable == 1)                    // do this only once - turn all down
-    {
-        // test prints
-        uart_puts("nastal FAULT - FAULT postupne vse vypnu a drz?m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
-
-        // set Timer counter value register to time delay for block transmit
-        TCNT1 = TFAULT;
-        // number of repeats to achieve aim delay time about 20 seconds
-        // if first run, fault_count set to short time delay
-        fault_count++;
-        actual_state = FAULT;     // go to fault in ISR timer1
-        loop_repeat(DISABLE);
-        timer1_set_state(ENABLE); // set on timer1
-    }
-    // if fault flag came from ADC, after previous loop jump here and repeats to FCOUNT
-    // FCOUNT is set to keep this block for 20 second
-    else if (fault_count < FCOUNT)
-    {
-        TCNT1 = TFAULT;
-        fault_count++;
-        actual_state = FAULT;       // still hold here
-        
-        // test prints
-        uart_puts("FAULT_count:");
-        uart_putc(fault_count);
-        uart_puts("\n");
-        
-        timer1_set_state(ENABLE);
-    }
-    // when accomplish previous rule, program jump here and set state to check status PA ability
-    else
-    {
-        // test prints
-        uart_puts("vse vypnuto, delay dosahnut. Nasleduje kontrola v AFTER_FAULT\n");
-        
-        actual_state = AFTER_FAULT;     // go to test device
-             
-        loop_repeat(ENABLE);
-        TIFR1 |= 1<<TOV1;      // jump quickly to ISR Timer1 into AFTER_FAULT
-        timer1_set_state(ENABLE); // run TIMER1
-    }
-} /* fault_off_all */
-
-// this function set ADC on and check status of PA ability
-void after_fault_check_status(void)
-{
-    timer1_set_state(DISABLE);
-    if (fault_flag>0)
-    {
-        // test prints
-        uart_puts("Kontrola jestli je vse OK\n");
-        pom = "SW&RD ADC a COMP    ";
-        
-    }
-    else
-    {
-        uart_puts("Vse je OK, nyni je povoleno PTT\n");
-        pom = "Vse OK           ";
-        button_ptt_set_irq(ENABLE);
-        actual_state = EVENT0;
-    }
-    adc_set_state(ENABLE);
-}
-
 /*
 * In these function deciding, if button after 10ms sequence
 * was pressed/push off.
@@ -229,41 +160,160 @@ void event_PTT_button_status_changed(void)
 {
     timer1_set_state(DISABLE);
     TCNT1 = 64910;
-    if (loop_enable == 1)
+    if (once_PTT_event == 1)
     {
         old_state = actual_state;
-        loop_repeat(DISABLE);
+        once_PTT_event = loop_repeat(DISABLE);
     }
     actual_state = TEST_PTT;
     uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
     timer1_set_state(ENABLE);
 }
 
+void fault_off_all(void)
+{
+    timer1_set_state(DISABLE);   // TIMER1 stops
+    button_ptt_set_irq(DISABLE); // ISR from PTT button disable, block transmit
+    if (once_fault_event == 1 && ((fault_flag == 1) || (fault_flag == 2)))                    // do this only once - turn all down if fault 
+    {
+        //PORTC ^= (1<<5);
+        uart_puts("nastal FAULT - FAULT postupne vse vypnu a drz?m delsi dobu, tedy tohle vse vcetne vypinani vseho delam znovu...\n");
+        fault_flag = 3;                 // set fault flag to after_fault state
+        adc_set_state(ENABLE);
+        
+        // test prints
+        
+
+        // set Timer counter value register to time delay for block transmit
+        TCNT1 = TFAULT;
+        // number of repeats to achieve aim delay time about 20 seconds
+        // if first run, fault_count set to short time delay
+        fault_count++;
+        actual_state = FAULT;     // go to fault in ISR timer1
+        
+        once_fault_event = loop_repeat(DISABLE);
+        timer1_set_state(ENABLE); // set on timer1
+    }
+    // if fault flag came from ADC, after previous loop jump here and repeats to FCOUNT
+    // FCOUNT is set to keep this block for 20 second
+    else if (fault_count < FCOUNT)
+    {
+        TCNT1 = TFAULT;
+        fault_count++;
+        actual_state = FAULT;       // still hold here
+        
+        // test prints
+        uart_puts("FAULT_count: ");
+        uart_putc(fault_count);
+        uart_puts("\n");
+        
+        timer1_set_state(ENABLE);
+    }
+    // when accomplish previous rule, program jump here and set state to check status PA ability
+    else
+    {
+        // test prints
+        uart_puts("vse vypnuto, delay dosahnut. Nasleduje kontrola v AFTER_FAULT\n");
+        
+        actual_state = AFTER_FAULT;     // go to test device
+             
+        once_fault_event = loop_repeat(ENABLE);
+        TIFR1 |= 1<<TOV1;      // jump quickly to ISR Timer1 into AFTER_FAULT
+        timer1_set_state(ENABLE); // run TIMER1
+    }
+} /* fault_off_all */
+
+// this function set ADC on and check status of PA ability
+void after_fault_check_status(void)
+{
+    timer1_set_state(DISABLE);
+    if (fault_flag>0)
+    {
+        fault_flag = 1;
+        uart_puts("Byla chyba, kontrola jestli je vse OK\n");
+        pom = "SW&RD ADC a COMP    ";
+        
+    }
+    else
+    {
+        uart_puts("Vse je OK, nyni je povoleno PTT\n");
+        pom = "Vse OK           ";
+        button_ptt_set_irq(ENABLE);
+        actual_state = EVENT0;
+    }
+}
+
 void processing_adc_data(void)
 {
-    char buffer4[9];
-    itoa(ADC,buffer4,10);
-    if ((ADC<UMIN) || (ADC>UMAX))
+    if (fault_flag == 2)            // if first run after start up device, read ADC value as ADC_SWR
     {
-        adc_set_state(DISABLE);
-        uart_puts("ADC hodnota ");
-        uart_puts(buffer4);
-        uart_puts(" je mimo rozsah, generuji fault flag\n");
+        uart_puts("first start - copy ADC to ADC_SWR\n");
+        ADC_SWR = ADC;
+    }
+    if (((ADC_SWR<UMIN) || (ADC_SWR>UMAX)) && ((fault_flag == 0) || (fault_flag == 1)))
+    {
+        //uart_puts("ADC hodnota ");
+        //uart_puts(buffer4);
+        //uart_puts(" je mimo rozsah, generuji fault flag\n");
+        //PORTC ^= (1<<5);
         actual_state = FAULT;
         TIFR1 |= 1<<TOV1;
         fault_flag = 1;
         fault_count = 0;
         timer1_set_state(ENABLE);
     }
-    else if (fault_flag>0)
+    else if (fault_flag == 1)
     {
-        adc_set_state(DISABLE);
-        uart_puts("hodnota ADC ");
-        uart_puts(buffer4);
-        uart_puts(" je OK, vracim fault_flag = 0\n");
+        //uart_puts("hodnota ADC ");
+        //uart_puts(buffer4);
+        //uart_puts(" je OK, vracim fault_flag = 0\n");
         actual_state = AFTER_FAULT;
         fault_flag = 0;
         TIFR1 |= 1<<TOV1;
         timer1_set_state(ENABLE);
     }
+    else if ((fault_flag == 0) || (fault_flag == 3))
+    {
+        ADMUX &= 0xF0;
+        switch (adc_active_channel) {
+        case ADC_CHANNEL_SWR:
+            //PORTC ^= (1<<5);
+            ADC_TEMP_INT = ADC;
+            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_TEMP_HEATSINK:
+            ADC_SWR = ADC;
+            adc_active_channel = ADC_CHANNEL_POWER;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_POWER:
+            PORTC ^= (1<<5);
+            ADC_TEMP_HEATSINK = ADC;
+            adc_active_channel = ADC_CHANNEL_Ucc;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_Ucc:
+            ADC_POWER = ADC;
+            adc_active_channel = ADC_CHANNEL_Icc;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_Icc:
+            ADC_Ucc = ADC;
+            adc_active_channel = ADC_CHANNEL_TEMP_INT;
+            ADMUX |= adc_active_channel;
+            break;
+        case ADC_CHANNEL_TEMP_INT:
+            ADC_Icc = ADC;
+            adc_active_channel = ADC_CHANNEL_SWR;
+            ADMUX |= adc_active_channel;
+            break;
+        default:
+            adc_active_channel = ADC_CHANNEL_SWR;
+            break;
+        }
+    }
+    
+    
+    
 }

@@ -12,13 +12,11 @@
 #include "types.h"
 #include <avr/io.h>
 
-uint8_t loop_enable;
-
 // ========================================================
 void timer1_set_state(state_t state);    
 void button_ptt_set_irq(state_t state);
 void adc_set_state(state_t state);
-void loop_repeat(state_t state);
+uint8_t loop_repeat(state_t state);
 // ========================================================
 
 

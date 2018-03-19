@@ -20,19 +20,29 @@
 
 // global variables
 uint8_t way = 0;                    // default way is to turning off (normally when PTT push off)
-uint8_t fault_count = 9;            // presets the fault counter to the default value (only one looú)
-uint8_t fault_flag = 2;             // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
+uint8_t fault_count = 2;            // presets the fault counter to the default value (only one looú)
+uint8_t fault_flag;             // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
 char *pom;                          // auxiliary variable for sending message to UART or LCD
 
 volatile uint8_t cela_cast = 0;
 volatile uint16_t desetinna = 0;
 volatile float des_tvar = 0;
 char buffer[9], buffer2[9], buffer3[9];
-                   
-sequencer_t old_state;              
-sequencer_t actual_state = FAULT;   // default after start up device, go to fault event
+uint8_t once_fault_event;
+uint8_t once_PTT_event;
 
-adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;
+uint16_t ADC_SWR;
+uint16_t ADC_TEMP_HEATSINK;
+uint16_t ADC_POWER;
+uint16_t ADC_Ucc;
+uint16_t ADC_Icc;
+uint16_t ADC_TEMP_INT;
+
+
+                   
+sequencer_t old_state;                                  // backup enum types           
+sequencer_t actual_state = FAULT;                       // default after start up device, go to fault event
+adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
 
 void setup(void)
 {
@@ -40,6 +50,7 @@ void setup(void)
     DDRB |= 0b01111111;    // set display pins as output (H output)
     DDRD &= ~(1<<2);       // INT0 as input (L)
     PORTD |= 1<<2;         // INT0 H pull-up, L Hi-impedance
+    DDRC = (1<<5) | (1<<6);        // set PORTC5 as output 
     
     // setup TIMER1
     EICRA |= 1<<ISC00;     // any logical change INT0 generate interrupt
@@ -79,7 +90,9 @@ int main(void)
 	// after startup, actual_state was set in setup() to fault
     // now jump immediately to ISR_timer1 to execute routine of fault
     TIFR1 |= 1<<TOV1;
+    PORTC &= ~(1<<5);
     fault_flag = 2;             // flag set to identifing first startup device
+    once_fault_event = loop_repeat(ENABLE);
     timer1_set_state(ENABLE);   // Timer1 GO!
     
     // in infinite loop print info to LCD
@@ -91,10 +104,11 @@ int main(void)
         lcd_gotoxy(0,1);
         lcd_puts("    ");
         lcd_gotoxy(0,1);
-        itoa(des_tvar,buffer3,10);
+        //for (uint8_t i = 0,i<=)
+        itoa(ADC_POWER,buffer3,10);
         lcd_puts(buffer3);
         
-        des_tvar = (des_tvar*1.1)/1023.0;
+        des_tvar = (ADC_POWER*1.133)/1024.0;
         cela_cast = des_tvar;
         desetinna = (des_tvar - (float)cela_cast)*1000;
         itoa(desetinna,buffer2,10);
@@ -110,6 +124,8 @@ int main(void)
     };
     return 0;
 }
+
+
 
 ISR(INT0_vect)
 {
@@ -140,48 +156,19 @@ ISR(TIMER1_OVF_vect)
             break;
         default:
             actual_state = FAULT;
+            break;
     }
 }
 
 ISR(ADC_vect)
 {
     cli();
-    ADMUX &= 0xF0;
-    switch (adc_active_channel)
-    {
-        case ADC_CHANNEL_SWR:
-            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
-            ADMUX |= adc_active_channel;
-            break;
-        case ADC_CHANNEL_TEMP_HEATSINK:
-            adc_active_channel = ADC_CHANNEL_POWER;
-            ADMUX |= adc_active_channel;
-            break;
-        case ADC_CHANNEL_POWER:
-            adc_active_channel = ADC_CHANNEL_Ucc;
-            ADMUX |= adc_active_channel;
-            break;
-        case ADC_CHANNEL_Ucc:
-            adc_active_channel = ADC_CHANNEL_Icc;
-            ADMUX |= adc_active_channel;
-            break;
-        case ADC_CHANNEL_Icc:
-            adc_active_channel = ADC_CHANNEL_TEMP_INT;
-            ADMUX |= adc_active_channel;
-            break;
-        case ADC_CHANNEL_TEMP_INT:
-            adc_active_channel = ADC_CHANNEL_SWR;
-            ADMUX |= adc_active_channel;
-            break;
-        default:
-            adc_active_channel = ADC_CHANNEL_SWR;
-            
         
     // test prints
        
-    // conversion to display 
-    des_tvar = ADC;
+    // conversion to display
     
     processing_adc_data();
+        
     sei();
 }
