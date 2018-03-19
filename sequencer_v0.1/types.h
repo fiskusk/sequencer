@@ -1,6 +1,7 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
+#include <avr/io.h>
 
 typedef enum {
 	ENABLE = 1,
