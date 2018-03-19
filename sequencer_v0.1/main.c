@@ -25,18 +25,13 @@ char buffer[9], buffer2[9], buffer3[9];
 uint8_t once_fault_event;
 uint8_t once_ptt_event;
 
-uint16_t adc_swr;
-uint16_t adc_temp_heatsink;
-uint16_t adc_power;
-uint16_t adc_ucc;
-uint16_t adc_icc;
-uint16_t adc_temp_int;
+
 
 
 
 sequencer_t old_state;                                  // backup enum types
 sequencer_t actual_state = FAULT;                       // default after start up device, go to fault event
-adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
+
 
 void setup(void)
 {

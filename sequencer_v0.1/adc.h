@@ -22,4 +22,6 @@ extern uint16_t adc_power;
 extern uint16_t adc_temp_int;
 extern uint16_t adc_temp_heatsink;
 
+
+
 #endif // ADC_H_INCLUDED

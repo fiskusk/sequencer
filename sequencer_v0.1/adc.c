@@ -3,6 +3,8 @@
 #define UMIN   0
 #define UMAX   600
 
+volatile adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
+
 volatile uint16_t adc_swr;
 volatile uint16_t adc_ucc;
 volatile uint16_t adc_icc;
