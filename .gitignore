@@ -1,7 +1,13 @@
 Debug
 Release
+*.vs
 *.xml
 *.atsln
 *.cproj
 *.atsuo
 *.tags*
+*.o
+*.list
+*.lss
+*.elf
+*.hex

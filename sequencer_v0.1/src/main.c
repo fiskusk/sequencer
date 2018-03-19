@@ -1,12 +1,5 @@
-/*
- * sequencer_v0.1.c
- *
- * Created: 10.3.2018 20:11:55
- * Author : fkla
- */
-
 // include used libraries
-#define  F_CPU 16000000UL
+#include "settings.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
@@ -17,10 +10,11 @@
 #include "lcd.h"            // library for LCD display
 #include "uart.h"           // library for UART to debuging
 #include "events.h"         // library functions for events
+#include "adc.h"
 
 // global variables
 uint8_t way = 0;                    // default way is to turning off (normally when PTT push off)
-uint8_t fault_count = 2;            // presets the fault counter to the default value (only one looú)
+uint8_t fault_count = 2;            // presets the fault counter to the default value (only one looï¿½)
 uint8_t fault_flag;             // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
 char *pom;                          // auxiliary variable for sending message to UART or LCD
 
@@ -31,18 +25,10 @@ char buffer[9], buffer2[9], buffer3[9];
 uint8_t once_fault_event;
 uint8_t once_ptt_event;
 
-uint16_t adc_swr;
-uint16_t adc_temp_heatsink;
-uint16_t adc_power;
-uint16_t adc_ucc;
-uint16_t adc_icc;
-uint16_t adc_temp_int;
 
+sequencer_t old_state;                                  // backup enum types
+sequencer_t machine_state = FAULT;                       // default after start up device, go to fault event
 
-                   
-sequencer_t old_state;                                  // backup enum types           
-sequencer_t actual_state = FAULT;                       // default after start up device, go to fault event
-adc_channel_t adc_active_channel = ADC_CHANNEL_SWR;     // default first channel in ADC process
 
 void setup(void)
 {
@@ -50,43 +36,30 @@ void setup(void)
     DDRB |= 0b01111111;    // set display pins as output (H output)
     DDRD &= ~(1<<2);       // INT0 as input (L)
     PORTD |= 1<<2;         // INT0 H pull-up, L Hi-impedance
-    DDRC = (1<<5) | (1<<6);        // set PORTC5 as output 
-    
+    DDRC = (1<<5) | (1<<6);        // set PORTC5 as output
+
     // setup TIMER1
     EICRA |= 1<<ISC00;     // any logical change INT0 generate interrupt
     TIMSK1 |= 1<<TOIE1;    // enable interrupt when overflow Timer1
-    
-    // setup ADC
-    // internally reference
-    // 0. external AREF (internal Vref disabled),
-    // 1. AVCC with external cap at AREF pin,
-    // 2. reserved
-    // 3. Internal 1,1V voltage ref. with external cap on AREF pin
-    ADMUX = (1<<REFS1) | (1<<REFS0);
-    
-    // ADENable, ADStart Conversion, ADInterrupt Enable
-    // when set ADATE - ADCH MSB, ADCL LSB
-    // ADPrescaler Select - 2,2,4,8,16,32,64,128
-    ADCSRA = (1<<ADEN) | (1<<ADSC) | (1<<ADATE) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2);
-    
-    PRR &= ~(1<<PRADC);
-    
+
+    adc_init();
+
     // setup LCD and UART
     lcd_init(LCD_DISP_ON); // initialization display
     lcd_clrscr();          // clear display
     uart_init();           // initialization UART
-    
+
     sei();                 // enable all interrupts
 }
 
 int main(void)
 {
     setup();
-    
+
     //test prints
-    pom = "Pok";            
+    pom = "Pok";
     uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
-    
+
 	// after startup, actual_state was set in setup() to fault
     // now jump immediately to ISR_timer1 to execute routine of fault
     TIFR1 |= 1<<TOV1;
@@ -94,33 +67,33 @@ int main(void)
     fault_flag = 2;             // flag set to identifing first startup device
     once_fault_event = loop_repeat(ENABLE);
     timer1_set_state(ENABLE);   // Timer1 GO!
-    
+
     // in infinite loop print info to LCD
     while (1)
     {
         lcd_gotoxy(0,0);
         lcd_puts(pom);
-        
+
         lcd_gotoxy(0,1);
         lcd_puts("    ");
         lcd_gotoxy(0,1);
         //for (uint8_t i = 0,i<=)
         itoa(adc_power,buffer3,10);
         lcd_puts(buffer3);
-        
+
         des_tvar = (adc_power*1.133)/1024.0;
         cela_cast = des_tvar;
         desetinna = (des_tvar - (float)cela_cast)*1000;
         itoa(desetinna,buffer2,10);
         itoa(cela_cast,buffer,10);
-        
+
         lcd_gotoxy(9,1);
         lcd_puts(buffer);
         lcd_putc(',');
         lcd_puts(buffer2);
         lcd_puts(" V  ");
-        
-        _delay_ms(200);        
+
+        _delay_ms(200);
     };
     return 0;
 }
@@ -129,12 +102,12 @@ int main(void)
 
 ISR(INT0_vect)
 {
-    event_PTT_button_status_changed(); 
+    event_PTT_button_status_changed();
 }
 
 ISR(TIMER1_OVF_vect)
 {
-    switch(actual_state)
+    switch(machine_state)
     {
         case EVENT0:
             E0_on_off_relay2();
@@ -155,20 +128,7 @@ ISR(TIMER1_OVF_vect)
             test_state_of_PTT_button();
             break;
         default:
-            actual_state = FAULT;
+            machine_state = FAULT;
             break;
     }
-}
-
-ISR(ADC_vect)
-{
-    cli();
-        
-    // test prints
-       
-    // conversion to display
-    
-    processing_adc_data();
-        
-    sei();
 }

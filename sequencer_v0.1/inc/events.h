@@ -1,13 +1,7 @@
-/*
- * events.h
- * Functions of each event
- * Created: 16.3.2018 15:18:14
- *  Author: fkla
- */
-
 #ifndef EVENTS_H_INCLUDED
 #define EVENTS_H_INCLUDED
 
+#include "settings.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "uart.h"
@@ -15,8 +9,8 @@
 #include "types.h"
 #include "permitters.h"
 
-/* Functions of each events. When PTT button status changed, 
-*  call function Event_PTT_button_status_changed(). 
+/* Functions of each events. When PTT button status changed,
+*  call function Event_PTT_button_status_changed().
 * First
 */
 
@@ -31,7 +25,6 @@ void fault_off_all(void);
 void after_fault_check_status(void);
 void test_state_of_PTT_button(void);
 void event_PTT_button_status_changed(void);
-void processing_adc_data(void);
 // ========================================================
 
 #endif // EVENTS_H_INCLUDED
