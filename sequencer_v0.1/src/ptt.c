@@ -18,7 +18,7 @@ void ptt_init(void)
     TIMSK0 = TOIE0;
 }
 
-void ptt_timer_set_state(state_t state)    // switch, which turn on (1) timer0, or turn off (0)
+void ptt_timer(state_t state)    // switch, which turn on (1) timer0, or turn off (0)
 {
     (state == ENABLE) ? (TCCR0B = (1<<CS02) | (1<<CS00)) : (TCCR0B &= ~((1<<CS02) | (1<<CS00)));
 }
@@ -26,25 +26,25 @@ void ptt_timer_set_state(state_t state)    // switch, which turn on (1) timer0, 
 ISR(INT0_vect)
 {
     TCNT0 = 156;
-    ptt_timer_set_state(ENABLE);
+    ptt_timer(ENABLE);
 }
 
 ISR(TIMER0_OVF_vect)
 {
-    ptt_timer_set_state(DISABLE);
+    ptt_timer(DISABLE);
     if (button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
         switching_relay1(SWITCHING_ON);
         machine_state = EVENT0;
         TCNT1         = TREL;
-        switching_timer_set_state(ENABLE);
+        switching_timer(ENABLE);
     }
     else if (!button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
         switching_ucc(SWITCHING_OFF);
         machine_state = EVENT1;
         TCNT1        = TSEQ;
-        switching_timer_set_state(ENABLE);
+        switching_timer(ENABLE);
     }
     else
     {
@@ -60,7 +60,7 @@ void error(void)
     ptt_set_irq(DISABLE); // deny next PTT interrupt
     machine_state = FAULT;        // next EVENT will be FAULT
     TIFR1 |= 1 << TOV1;       // jump quickly to ISR Timer1 into AFTER_FAULT
-    switching_timer_set_state(ENABLE);
+    switching_timer(ENABLE);
 }
 
 void ptt_set_irq(state_t state)

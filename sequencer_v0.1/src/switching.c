@@ -24,10 +24,22 @@ switching_t switching_state;
 
 void switching_init(void)
 {
+    SWITCHING_RELAY1_DDR |= 1<<SWITCHING_RELAY1_PIN_NUM;
+    SWITCHING_RELAY2_DDR |= 1<<SWITCHING_RELAY2_PIN_NUM;
+    SWITCHING_BIAS_DDR |= 1<<SWITCHING_BIAS_PIN_NUM;
+    SWITCHING_UCC_DDR |= 1<<SWITCHING_UCC_PIN_NUM;
+    SWITCHING_FAN_DDR |= 1<<SWITCHING_FAN_PIN_NUM;
+    
+    SWITCHING_RELAY1_PORT &= ~(1<<SWITCHING_RELAY1_PIN_NUM);
+    SWITCHING_RELAY2_PORT &= ~(1<<SWITCHING_RELAY2_PIN_NUM);
+    SWITCHING_BIAS_PORT &= ~(1<<SWITCHING_BIAS_PIN_NUM);
+    SWITCHING_UCC_PORT &= ~(1<<SWITCHING_UCC_PIN_NUM);
+    SWITCHING_FAN_PORT &= ~(1<<SWITCHING_FAN_PIN_NUM);
+    
     TIMSK1 |= 1<<TOIE1;
 }
 
-void switching_timer_set_state(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
+void switching_timer(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
 {
 	(state == ENABLE) ? (TCCR1B |= (1<<CS12)) : (TCCR1B &= ~(1<<CS12));
 }
@@ -75,13 +87,13 @@ void switching_on_sequence(void)
         switching_relay2(switching_state);
         TCNT1 = TSEQ;
         machine_state = EVENT1;
-        switching_timer_set_state(ENABLE);
+        switching_timer(ENABLE);
         break;
         case EVENT1:
         switching_bias(switching_state);
         TCNT1 = TSEQ;
         machine_state = EVENT2;
-        switching_timer_set_state(ENABLE);
+        switching_timer(ENABLE);
         break;
         case EVENT2:
         switching_ucc(switching_state);
@@ -97,13 +109,13 @@ void switching_off_sequence(void)
         switching_bias(switching_state);
         TCNT1           = TSEQ;
         machine_state   = EVENT1;
-        switching_timer_set_state(ENABLE);
+        switching_timer(ENABLE);
         break;
     case EVENT1:
         switching_relay2(switching_state);
         TCNT1           = TREL;
         machine_state   = EVENT2;
-        switching_timer_set_state(ENABLE);
+        switching_timer(ENABLE);
         break;
     case EVENT2:
         switching_relay1(switching_state);
@@ -113,7 +125,7 @@ void switching_off_sequence(void)
 
 ISR(TIMER1_OVF_vect)
 {
-    switching_timer_set_state(DISABLE);
+    switching_timer(DISABLE);
     if (switching_state == SWITCHING_ON)
     {
         switching_on_sequence();

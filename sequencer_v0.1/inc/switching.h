@@ -21,7 +21,7 @@ typedef enum{
 sequencer_t machine_state;                       // default after start up device, go to fault event
 extern switching_t switching_state;
 
-void switching_timer_set_state(state_t state); 
+void switching_timer(state_t state); 
 void switching_init(void);
 void switching_relay1(switching_t switching_state);
 void switching_relay2(switching_t switching_state);

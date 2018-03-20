@@ -45,7 +45,7 @@ void main_initialization(void)
 {
     TIFR1 |= 1<<TOV1;
     once_fault_event = loop_repeat(ENABLE);
-    switching_timer_set_state(ENABLE);   // Timer1 GO!
+    switching_timer(ENABLE);   // Timer1 GO!
 }
 
 int main(void)

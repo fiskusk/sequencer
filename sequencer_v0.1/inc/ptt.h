@@ -13,7 +13,7 @@
 
 
 void ptt_init(void);
-void ptt_timer_set_state(state_t state);
+void ptt_timer(state_t state);
 void error(void);
 void ptt_set_irq(state_t state);
 
