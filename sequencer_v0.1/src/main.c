@@ -1,14 +1,12 @@
-// include used libraries
 #include "settings.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
-// include my libraries
-#include "lcd.h"  // library for LCD display
-#include "uart.h" // library for UART to debuging
-// #include "events.h"         // library functions for events
+#include "lcd.h"
+#include "uart.h"
+
 #include "adc.h"
 #include "ptt.h"
 #include "switching.h"
