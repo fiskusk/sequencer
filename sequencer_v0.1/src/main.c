@@ -36,11 +36,9 @@ void setup(void)
     DDRB |= 0b01111111;    // set display pins as output (H output)
     DDRC = (1<<5) | (1<<6);        // set PORTC5 as output
 
-    // setup TIMER1
-    TIMSK1 |= 1<<TOIE1;    // enable interrupt when overflow Timer1
-
     ptt_init();
     adc_init();
+    switching_init();
 
     // setup LCD and UART
     lcd_init(LCD_DISP_ON); // initialization display
@@ -95,24 +93,4 @@ int main(void)
     return 0;
 }
 
-ISR(TIMER1_OVF_vect)
-{
-    switch(machine_state)
-    {
-        case EVENT0:
-            E0_on_off_relay2();
-            break;
-        case EVENT1:
-            E1_on_off_bias();
-            break;
-        case EVENT2:
-            E2_on_ucc_off_relay1();
-            break;
-        case FAULT:
-            fault_off_all();
-            break;
-        default:
-            after_fault_check_status();
-            break;
-    }
-}
+

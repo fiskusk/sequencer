@@ -15,7 +15,6 @@
 */
 
 // ========================================================
-void error(void);
 void E0_on_off_relay2(void);                        // next state - bias
 void E1_on_off_bias(void);
 void E2_on_ucc_off_relay1(void);

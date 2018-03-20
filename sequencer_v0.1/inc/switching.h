@@ -7,7 +7,6 @@ typedef enum {
     SWITCHING_ON
 } switching_t;
 
-
 extern switching_t switching_state;
 
 

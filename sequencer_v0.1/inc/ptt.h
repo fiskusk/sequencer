@@ -13,5 +13,11 @@
 
 
 void ptt_init(void);
+void ptt_timer_set_state(state_t state);
+void ptt_pushed_up_on_relay1_on_fan(void);
+void event_ptt_pushed_down_off_ucc(void);
+void error(void);
+void ptt_set_irq(state_t state);
+
 
 #endif // PTT_H_INCLUDED

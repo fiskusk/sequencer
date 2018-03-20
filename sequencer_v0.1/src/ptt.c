@@ -77,9 +77,13 @@ void error(void)
     uart_puts("Tlacis ale nezapnu se, mam poruchu\n");
     pom = "nastala chyba       ";
 
-    button_ptt_set_irq(DISABLE); // deny next PTT interrupt
+    ptt_set_irq(DISABLE); // deny next PTT interrupt
     machine_state = FAULT;        // next EVENT will be FAULT
     TIFR1 |= 1 << TOV1;       // jump quickly to ISR Timer1 into AFTER_FAULT
     timer1_set_state(ENABLE);
 }
 
+void ptt_set_irq(state_t state)
+{
+    (state == ENABLE) ? (EIMSK |= 1<<INT0) : (EIMSK &= ~(1<<INT0));
+}

@@ -60,7 +60,7 @@ void E2_on_ucc_off_relay1(void)
 void fault_off_all(void)
 {
     timer1_set_state(DISABLE);                                             // TIMER1 stops
-    button_ptt_set_irq(DISABLE);                                           // ISR from PTT button disable, block transmit
+    ptt_set_irq(DISABLE);                                           // ISR from PTT button disable, block transmit
     if (once_fault_event == 1 && ((fault_flag == 1) || (fault_flag == 2))) // do this only once - turn all down if fault
     {
         // PORTC ^= (1<<5);
@@ -124,7 +124,7 @@ void after_fault_check_status(void)
     {
         uart_puts("Vse je OK, nyni je povoleno PTT\n");
         pom = "Vse OK           ";
-        button_ptt_set_irq(ENABLE);
+        ptt_set_irq(ENABLE);
         machine_state = EVENT0;
     }
 }
