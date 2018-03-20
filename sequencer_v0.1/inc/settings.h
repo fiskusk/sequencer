@@ -6,4 +6,6 @@
 # define  F_CPU 16000000UL
 #endif
 
+extern char *pom;
+
 #endif // SETTINGS_H_INCLUDED
