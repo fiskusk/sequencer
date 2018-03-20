@@ -13,13 +13,17 @@ typedef enum {
 	ERROR = !SUCCESS,
 } result_t;
 
+typedef enum {
+    SWITCHING_OFF,
+    SWITCHING_ON,
+} switching_t;
+
 typedef enum{
 	EVENT0,
 	EVENT1,
 	EVENT2,
 	FAULT,
 	AFTER_FAULT,
-	TEST_PTT
 } sequencer_t;
 
 

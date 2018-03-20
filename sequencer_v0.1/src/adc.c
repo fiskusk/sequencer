@@ -55,7 +55,7 @@ void adc_get_data(void)
             adc_icc = ADC;
             adc_active_channel = ADC_CHANNEL_TEMP_INT;
             break;
-        case ADC_CHANNEL_TEMP_INT:
+        default:
             adc_temp_int       = ADC;
             adc_active_channel = ADC_CHANNEL_SWR;
             break;

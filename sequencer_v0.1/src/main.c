@@ -24,7 +24,6 @@ volatile uint16_t desetinna = 0;
 volatile float des_tvar = 0;
 char buffer[9], buffer2[9], buffer3[9];
 uint8_t once_fault_event;
-uint8_t once_ptt_event;
 
 
 sequencer_t old_state;                                  // backup enum types
@@ -38,7 +37,6 @@ void setup(void)
     DDRC = (1<<5) | (1<<6);        // set PORTC5 as output
 
     // setup TIMER1
-    EICRA |= 1<<ISC00;     // any logical change INT0 generate interrupt
     TIMSK1 |= 1<<TOIE1;    // enable interrupt when overflow Timer1
 
     ptt_init();
@@ -63,7 +61,6 @@ int main(void)
 	// after startup, actual_state was set in setup() to fault
     // now jump immediately to ISR_timer1 to execute routine of fault
     TIFR1 |= 1<<TOV1;
-    PORTC &= ~(1<<5);
     fault_flag = 2;             // flag set to identifing first startup device
     once_fault_event = loop_repeat(ENABLE);
     timer1_set_state(ENABLE);   // Timer1 GO!
@@ -98,13 +95,6 @@ int main(void)
     return 0;
 }
 
-
-
-ISR(INT0_vect)
-{
-    event_PTT_button_status_changed();
-}
-
 ISR(TIMER1_OVF_vect)
 {
     switch(machine_state)
@@ -116,19 +106,13 @@ ISR(TIMER1_OVF_vect)
             E1_on_off_bias();
             break;
         case EVENT2:
-            E2_on_Ucc_off_relay1();
+            E2_on_ucc_off_relay1();
             break;
         case FAULT:
             fault_off_all();
             break;
-        case AFTER_FAULT:
-            after_fault_check_status();
-            break;
-        case TEST_PTT:
-            test_state_of_PTT_button();
-            break;
         default:
-            machine_state = FAULT;
+            after_fault_check_status();
             break;
     }
 }

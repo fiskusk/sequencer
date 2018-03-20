@@ -9,6 +9,7 @@
 #include "main.h"
 #include "uart.h"
 #include "permitters.h"
+#include "switching.h"
 
 
 void ptt_init(void);

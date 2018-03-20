@@ -1,58 +1,5 @@
 #include "events.h"
 
-/*
- * Event for PTT is pushed up and device turn relay1
- * and FAN independently directly.
- * Next state is EVENT0 - turn relay2.
- * They should be turned on simultaneously with relay1.
- */
-void event_PTT_pushed_up_on_relay1_on_FAN(void)
-{
-    timer1_set_state(DISABLE);
-    pom = "sw rel1+turn fan   ";
-    machine_state = EVENT0;
-    TCNT1        = TREL;
-
-    // test prints
-    uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
-
-    timer1_set_state(ENABLE);
-}
-
-/*
- * Event for PTT is pushed down and device turn off Ucc.
- * Next state is EVENT1 - (way = 0) turn off bias.
- */
-void event_PTT_pushed_down_off_Ucc(void)
-{
-    timer1_set_state(DISABLE);
-    machine_state = EVENT1;
-    TCNT1        = TSEQ;
-
-    // test prints
-    pom = "Switch OFF Ucc    ";
-    uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
-
-    timer1_set_state(ENABLE);
-}
-
-/*
- * If pressed or push down PTT and was fault, these function block
- */
-void error(void)
-{
-    timer1_set_state(DISABLE);
-
-    // test prints
-    uart_puts("Tlacis ale nezapnu se, mam poruchu\n");
-    pom = "nastala chyba       ";
-
-    button_ptt_set_irq(DISABLE); // deny next PTT interrupt
-    machine_state = FAULT;        // next EVENT will be FAULT
-    TCNT1        = 65520;        // jump immediately o ISR_TIMER1
-    timer1_set_state(ENABLE);
-}
-
 void E0_on_off_relay2(void)
 {
     timer1_set_state(DISABLE);
@@ -95,7 +42,7 @@ void E1_on_off_bias(void)
     }
 }
 
-void E2_on_Ucc_off_relay1(void)
+void E2_on_ucc_off_relay1(void)
 {
     timer1_set_state(DISABLE);
     if (way)
@@ -108,66 +55,6 @@ void E2_on_Ucc_off_relay1(void)
         uart_puts("EVENT2 vypinam rele 1\n");
         pom = "Switch OFF rel 1";
     }
-}
-
-/*
- * In these function deciding, if button after 10ms sequence
- * was pressed/push off.
- * According to this, it calls the appropriate functions.
- */
-void test_state_of_PTT_button(void)
-{
-    timer1_set_state(DISABLE);
-
-    // test prints
-    uart_puts("jsem v case PTT\n");
-
-    // recover main statement
-    machine_state = old_state;
-
-    // if button is pressed and at the same time was not fault or after_fault
-    if (button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
-    {
-        // test prints
-        uart_puts("zapinam\n");
-
-        way = 1;
-        event_PTT_pushed_up_on_relay1_on_FAN();
-    }
-    // if button is push down and at the same time was not fault or after_fault
-    else if (!button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
-    {
-        // test prints
-        uart_puts("vypinam\n");
-
-        way = 0;
-        event_PTT_pushed_down_off_Ucc();
-    }
-    // when was fault or after_fault
-    else
-    {
-        error();
-    }
-} /* test_state_of_PTT_button */
-
-/* In this function set TIMER1 to achieve 10ms delay
- *  after change status of button and set state TEST_PTT.
- * State TEST_PTT deciding, if button after three 10ms sequence
- * was pressed/push off or during these 30 seconds was button glitch.
- * According to this, it calls the appropriate functions.
- */
-void event_PTT_button_status_changed(void)
-{
-    timer1_set_state(DISABLE);
-    TCNT1 = 64910;
-    if (once_ptt_event == 1)
-    {
-        old_state      = machine_state;
-        once_ptt_event = loop_repeat(DISABLE);
-    }
-    machine_state = TEST_PTT;
-    uart_puts("Preruseni ISR INT0, skace do test_PTT\n");
-    timer1_set_state(ENABLE);
 }
 
 void fault_off_all(void)
