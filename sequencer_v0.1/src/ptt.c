@@ -35,6 +35,7 @@ ISR(TIMER0_OVF_vect)
     if (button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
         switching_relay1(SWITCHING_ON);
+        switching_fan(SWITCHING_ON);
         machine_state = EVENT0;
         TCNT1         = TREL;
         switching_timer(ENABLE);
