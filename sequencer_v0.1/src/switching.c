@@ -34,7 +34,7 @@
 #define SWITCHING_FAN_ON     (SWITCHING_FAN_PORT |= 1 << SWITCHING_FAN_PIN_NUM)
 #define SWITCHING_FAN_OFF    (SWITCHING_FAN_PORT &= ~(1 << SWITCHING_FAN_PIN_NUM))
 
-sequencer_t machine_state = FAULT;
+sequencer_t machine_state;
 switching_t switching_state;
 
 void switching_init(void)
