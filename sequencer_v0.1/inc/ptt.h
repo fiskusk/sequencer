@@ -6,9 +6,7 @@
 #include <avr/interrupt.h>
 
 #include "types.h"
-#include "main.h"
 #include "uart.h"
-#include "permitters.h"
 #include "switching.h"
 
 

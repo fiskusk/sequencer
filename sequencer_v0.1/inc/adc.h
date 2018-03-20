@@ -6,9 +6,9 @@
 #include <avr/interrupt.h>
 
 #include "types.h"
-#include "main.h"
 #include "uart.h"
-#include "permitters.h"
+#include "ptt.h"
+#include "switching.h"
 
 
 typedef enum {
