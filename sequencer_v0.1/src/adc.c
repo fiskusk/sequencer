@@ -61,7 +61,7 @@ void adc_get_data(void)
             break;
     }
     ADMUX = (ADMUX & 0xF0) | adc_active_channel;
-} /* processing_adc_data */
+} 
 
 /*
     fault_flag
@@ -78,6 +78,15 @@ result_t adc_check_limits(void)
 
     return SUCCESS;
 }
+
+void adc_evaluation(void)
+{
+    if (adc_check_limits() == ERROR)
+    {
+        
+    }
+}
+
     /*{
         // uart_puts("ADC hodnota ");
         // uart_puts(buffer4);
@@ -106,6 +115,6 @@ ISR(ADC_vect)
 {
     cli();
     adc_get_data();
-    adc_check_limits();
+    adc_evaluation();
     sei();
 }

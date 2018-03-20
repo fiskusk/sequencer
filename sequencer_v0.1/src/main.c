@@ -15,9 +15,6 @@
 #include "switching.h"
 
 // global variables
-uint8_t way = 0;                    // default way is to turning off (normally when PTT push off)
-uint8_t fault_count = 2;            // presets the fault counter to the default value (only one loo�)
-uint8_t fault_flag;             // 0 bez poruchy, 1 porucha, 2 prvni zapnuti-test
 char *pom;                          // auxiliary variable for sending message to UART or LCD
 
 volatile uint8_t cela_cast = 0;
@@ -44,7 +41,12 @@ void setup(void)
     sei();                 // enable all interrupts
 }
 
-void device_initialize(void);
+void main_initialization(void)
+{
+    TIFR1 |= 1<<TOV1;
+    once_fault_event = loop_repeat(ENABLE);
+    switching_timer_set_state(ENABLE);   // Timer1 GO!
+}
 
 int main(void)
 {
@@ -54,13 +56,7 @@ int main(void)
     pom = "Pok";
     uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
     
-    device_initialize();
-	// after startup, actual_state was set in setup() to fault
-    // now jump immediately to ISR_timer1 to execute routine of fault
-    TIFR1 |= 1<<TOV1;
-    fault_flag = 2;             // flag set to identifing first startup device
-    once_fault_event = loop_repeat(ENABLE);
-    switching_timer_set_state(ENABLE);   // Timer1 GO!
+    main_initialization();
 
     // in infinite loop print info to LCD
     while (1)
