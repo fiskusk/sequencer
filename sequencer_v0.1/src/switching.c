@@ -94,7 +94,10 @@ void switching_fan(state_t state)
 {
     uart_puts("ON/OFF fan\n");
     pom = "sw fan ON/OFF   ";
-    (state == ENABLE) ? (SWITCHING_FAN_ON) : (SWITCHING_FAN_OFF);
+    if (adc_check_temp() == ERROR)
+        SWITCHING_FAN_ON;
+    else
+        (state == ENABLE) ? (SWITCHING_FAN_ON) : (SWITCHING_FAN_OFF);
 }
 
 void switching_on_sequence(void)

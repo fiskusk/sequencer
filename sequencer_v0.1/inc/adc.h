@@ -31,7 +31,8 @@ extern uint16_t adc_temp_heatsink;
 
 void adc_init(void);
 void adc_get_data(void);
-result_t adc_check_limits(void);
+result_t adc_check_swr(void);
+result_t adc_check_temp(void);
 
 
 #endif // ADC_H_INCLUDED
