@@ -1,19 +1,19 @@
 #include "adc.h"
 
-#define ADC_SWR_VOLTAGE_MAX   600
+#define ADC_SWR_VOLTAGE_MAX   1023
 
-#define ADC_TEMP_HEATSINK_MAX 600
+#define ADC_TEMP_HEATSINK_MAX 1023
 
-#define ADC_TEMP_INT_MAX      600
+#define ADC_TEMP_INT_MAX      1023
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
 
-uint16_t adc_swr;
-uint16_t adc_ucc;
-uint16_t adc_icc;
-uint16_t adc_power;
-uint16_t adc_temp_int;
-uint16_t adc_temp_heatsink;
+volatile uint16_t adc_swr;
+volatile uint16_t adc_ucc;
+volatile uint16_t adc_icc;
+volatile uint16_t adc_power;
+volatile uint16_t adc_temp_int;
+volatile uint16_t adc_temp_heatsink;
 
 void adc_init(void)
 {
@@ -28,11 +28,14 @@ void adc_init(void)
     // ADENable, ADStart Conversion, ADInterrupt Enable
     // when set ADATE - ADCH MSB, ADCL LSB
     // ADPrescaler Select - 2,2,4,8,16,32,64,128
-    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADATE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1<<ADIE) | (1 << ADATE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); //
 
     PRR &= ~(1 << PRADC);
 
     TIMSK2 |= 1 << TOIE2;
+    
+    DDRC &= 0b11100000;         // ADC0-4 as output
+    PORTC &= 0b11100000;        //ADC0-4 pull-up turn off
 }
 
 void adc_error_timer(state_t state)
@@ -60,7 +63,6 @@ void adc_get_data(void)
             adc_active_channel = ADC_CHANNEL_POWER;
             break;
         case ADC_CHANNEL_POWER:
-            PORTC    ^= (1 << 5);
             adc_power = ADC;
             adc_active_channel = ADC_CHANNEL_UCC;
             break;
@@ -112,15 +114,17 @@ void adc_evaluation(void)
 }
 
 ISR(ADC_vect)
-{
+{   
+    cli();
     adc_get_data();
-    adc_evaluation();
+    //adc_evaluation();
+    sei();
 }
 
 ISR(TIMER2_OVF_vect)
 {
     static uint16_t timer_ovf_count = 0;
-    if (++timer_ovf_count > 1225) // 20s 1225
+    if (++timer_ovf_count > 183) // 20s 1225 3s 183
     {
         timer_ovf_count = 0;
         adc_error_timer(DISABLE);

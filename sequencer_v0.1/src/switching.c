@@ -35,36 +35,36 @@ void switching_timer(state_t state) // switch, which turn on (1) timer1, or turn
 
 void switching_relay1(state_t state)
 {
-    uart_puts("ON/OFF rele 1\n");
-    pom = "sw rel1 ON/OFF   ";
+    uart_puts("rele 1\n");
+    pom = "rel1   ";
     (state == ENABLE) ? SWITCHING_RELAY1_ON : SWITCHING_RELAY1_OFF;
 }
 
 void switching_relay2(state_t state)
 {
-    uart_puts("ON/OFF rele 2\n");
-    pom = "sw rel2 ON/OFF   ";
+    uart_puts("rele 2\n");
+    pom = "rel2    ";
     (state == ENABLE) ? (SWITCHING_RELAY2_ON) : (SWITCHING_RELAY2_OFF);
 }
 
 void switching_bias(state_t state)
 {
-    uart_puts("ON/OFF bias\n");
-    pom = "sw bias ON/OFF   ";
+    uart_puts("bias\n");
+    pom = "bias    ";
     (state == ENABLE) ? (SWITCHING_BIAS_ON) : (SWITCHING_BIAS_OFF);
 }
 
 void switching_ucc(state_t state)
 {
-    pom = "ON/OFF Ucc    ";
-    uart_puts("sw Ucc ON/OFF\n");
+    pom = "Ucc    ";
+    uart_puts("ucc\n");
     (state == ENABLE) ? (SWITCHING_UCC_ON) : (SWITCHING_UCC_OFF);
 }
 
 void switching_fan(state_t state)
 {
-    uart_puts("ON/OFF fan\n");
-    pom = "sw fan ON/OFF   ";
+    uart_puts("fan\n");
+    pom = "fan     ";
     if (adc_check_temp() == ERROR)
         SWITCHING_FAN_ON;
     else
@@ -84,13 +84,13 @@ void switching_on_sequence(void)
             break;
         case RELAY2:
             TCNT1         = TSEQ;
-            machine_state = RELAY2;
+            machine_state = BIAS;
             switching_relay2(ENABLE);
             switching_timer(ENABLE);
             break;
         case BIAS:
             TCNT1         = TSEQ;
-            machine_state = BIAS;
+            machine_state = UCC;
             switching_bias(ENABLE);
             switching_timer(ENABLE);
             break;

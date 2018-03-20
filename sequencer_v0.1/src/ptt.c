@@ -15,7 +15,9 @@ void ptt_init(void)
     EICRA    |= 1 << ISC00; // any logical change INT0 generate interrupt
 
     // timer 0 init
-    TIMSK0 = TOIE0;
+    TIMSK0 |= 1<<TOIE0;
+    
+    ptt_set_irq(ENABLE);
 }
 
 void ptt_timer(state_t state)

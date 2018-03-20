@@ -28,6 +28,7 @@ void setup(void)
     lcd_init(LCD_DISP_ON); // initialization display
     lcd_clrscr();          // clear display
     uart_init();           // initialization UART
+   
 
     sei(); // enable all interrupts
 }
@@ -43,7 +44,7 @@ int main(void)
 
     // test prints
     pom = "Pok";
-    uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
+    uart_puts("Start\n");
 
 
     // in infinite loop print info to LCD
@@ -57,6 +58,8 @@ int main(void)
         lcd_gotoxy(0, 1);
         // for (uint8_t i = 0,i<=)
         itoa(adc_power, buffer3, 10);
+        uart_puts(buffer3);
+        uart_puts("   ");
         lcd_puts(buffer3);
 
         des_tvar  = (adc_power * 1.133) / 1024.0;
@@ -70,8 +73,10 @@ int main(void)
         lcd_putc(',');
         lcd_puts(buffer2);
         lcd_puts(" V  ");
-
-        _delay_ms(200);
+        
+        //(bit_is_set(TIMSK0,TOIE0)) ? (uart_puts("povoleno")) : (uart_puts("zakazano"));
+        
+        _delay_ms(500);
     }
     return 0;
 } /* main */

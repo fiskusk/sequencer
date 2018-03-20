@@ -21,12 +21,12 @@ typedef enum {
 } adc_channel_t;
 
 
-extern uint16_t adc_swr;
-extern uint16_t adc_ucc;
-extern uint16_t adc_icc;
-extern uint16_t adc_power;
-extern uint16_t adc_temp_int;
-extern uint16_t adc_temp_heatsink;
+extern volatile uint16_t adc_swr;
+extern volatile uint16_t adc_ucc;
+extern volatile uint16_t adc_icc;
+extern volatile uint16_t adc_power;
+extern volatile uint16_t adc_temp_int;
+extern volatile uint16_t adc_temp_heatsink;
 
 
 void adc_init(void);
