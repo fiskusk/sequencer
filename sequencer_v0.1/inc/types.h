@@ -13,11 +13,6 @@ typedef enum {
 	ERROR = !SUCCESS,
 } result_t;
 
-typedef enum {
-    SWITCHING_OFF,
-    SWITCHING_ON,
-} switching_t;
-
 typedef enum{
 	EVENT0,
 	EVENT1,
