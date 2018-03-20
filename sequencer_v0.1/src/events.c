@@ -2,13 +2,13 @@
 
 void E0_on_off_relay2(void)
 {
-    timer1_set_state(DISABLE);
+    switching_timer_set_state(DISABLE);
     if (way)
     {
         pom = "Switch ON rel 2    ";
         uart_puts("EVENT0 zapinam rele 2\n");
         TCNT1 = TSEQ;
-        timer1_set_state(ENABLE);
+        switching_timer_set_state(ENABLE);
         machine_state = EVENT1;
     }
     else
@@ -17,19 +17,19 @@ void E0_on_off_relay2(void)
         uart_puts("EVENT0 vypinam rele 2\n");
         TCNT1        = TREL;
         machine_state = EVENT2;
-        timer1_set_state(ENABLE);
+        switching_timer_set_state(ENABLE);
     }
 }
 
 void E1_on_off_bias(void)
 {
-    timer1_set_state(DISABLE);
+    switching_timer_set_state(DISABLE);
     if (way)
     {
         pom = "Switch ON bias   ";
         uart_puts("EVENT1 zapinam bias\n");
         TCNT1 = TSEQ;
-        timer1_set_state(ENABLE);
+        switching_timer_set_state(ENABLE);
         machine_state = EVENT2;
     }
     else
@@ -37,14 +37,14 @@ void E1_on_off_bias(void)
         pom = "Switch OFF bias    ";
         uart_puts("EVENT 1  vypinam bias\n");
         TCNT1 = TSEQ;
-        timer1_set_state(ENABLE);
+        switching_timer_set_state(ENABLE);
         machine_state = EVENT0;
     }
 }
 
 void E2_on_ucc_off_relay1(void)
 {
-    timer1_set_state(DISABLE);
+    switching_timer_set_state(DISABLE);
     if (way)
     {
         uart_puts("EVENT2 zapinam Ucc\n");
@@ -59,7 +59,7 @@ void E2_on_ucc_off_relay1(void)
 
 void fault_off_all(void)
 {
-    timer1_set_state(DISABLE);                                             // TIMER1 stops
+    switching_timer_set_state(DISABLE);                                             // TIMER1 stops
     ptt_set_irq(DISABLE);                                           // ISR from PTT button disable, block transmit
     if (once_fault_event == 1 && ((fault_flag == 1) || (fault_flag == 2))) // do this only once - turn all down if fault
     {
@@ -79,7 +79,7 @@ void fault_off_all(void)
         machine_state = FAULT; // go to fault in ISR timer1
 
         once_fault_event = loop_repeat(DISABLE);
-        timer1_set_state(ENABLE); // set on timer1
+        switching_timer_set_state(ENABLE); // set on timer1
     }
     // if fault flag came from ADC, after previous loop jump here and repeats to FCOUNT
     // FCOUNT is set to keep this block for 20 second
@@ -94,7 +94,7 @@ void fault_off_all(void)
         uart_putc(fault_count);
         uart_puts("\n");
 
-        timer1_set_state(ENABLE);
+        switching_timer_set_state(ENABLE);
     }
     // when accomplish previous rule, program jump here and set state to check status PA ability
     else
@@ -106,14 +106,14 @@ void fault_off_all(void)
 
         once_fault_event = loop_repeat(ENABLE);
         TIFR1 |= 1 << TOV1;       // jump quickly to ISR Timer1 into AFTER_FAULT
-        timer1_set_state(ENABLE); // run TIMER1
+        switching_timer_set_state(ENABLE); // run TIMER1
     }
 } /* fault_off_all */
 
 // this function set ADC on and check status of PA ability
 void after_fault_check_status(void)
 {
-    timer1_set_state(DISABLE);
+    switching_timer_set_state(DISABLE);
     if (fault_flag > 0)
     {
         fault_flag = 1;

@@ -9,9 +9,10 @@
 #include "main.h"           // main library
 #include "lcd.h"            // library for LCD display
 #include "uart.h"           // library for UART to debuging
-#include "events.h"         // library functions for events
+//#include "events.h"         // library functions for events
 #include "adc.h"
 #include "ptt.h"
+#include "switching.h"
 
 // global variables
 uint8_t way = 0;                    // default way is to turning off (normally when PTT push off)
@@ -24,11 +25,6 @@ volatile uint16_t desetinna = 0;
 volatile float des_tvar = 0;
 char buffer[9], buffer2[9], buffer3[9];
 uint8_t once_fault_event;
-
-
-sequencer_t old_state;                                  // backup enum types
-sequencer_t machine_state = FAULT;                       // default after start up device, go to fault event
-
 
 void setup(void)
 {
@@ -48,6 +44,8 @@ void setup(void)
     sei();                 // enable all interrupts
 }
 
+void device_initialize(void);
+
 int main(void)
 {
     setup();
@@ -55,13 +53,14 @@ int main(void)
     //test prints
     pom = "Pok";
     uart_puts("Start , vse vypne skokem do FAULT a provede prvni test v AFTER_FAULT\n");
-
+    
+    device_initialize();
 	// after startup, actual_state was set in setup() to fault
     // now jump immediately to ISR_timer1 to execute routine of fault
     TIFR1 |= 1<<TOV1;
     fault_flag = 2;             // flag set to identifing first startup device
     once_fault_event = loop_repeat(ENABLE);
-    timer1_set_state(ENABLE);   // Timer1 GO!
+    switching_timer_set_state(ENABLE);   // Timer1 GO!
 
     // in infinite loop print info to LCD
     while (1)

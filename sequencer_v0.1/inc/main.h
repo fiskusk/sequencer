@@ -13,8 +13,6 @@ extern uint8_t way;
 extern uint8_t fault_count;
 extern uint8_t fault_flag;
 extern char *pom;
-extern sequencer_t old_state;
-extern sequencer_t machine_state;
 extern uint8_t once_fault_event;
 
 #endif // MAIN_H_INCLUDED

@@ -34,42 +34,22 @@ ISR(TIMER0_OVF_vect)
     ptt_timer_set_state(DISABLE);
     if (button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
-        ptt_pushed_up_on_relay1_on_fan();
+        switching_relay1(SWITCHING_ON);
+        machine_state = EVENT0;
+        TCNT1         = TREL;
+        switching_timer_set_state(ENABLE);
     }
     else if (!button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
-        event_ptt_pushed_down_off_ucc();
+        switching_ucc(SWITCHING_OFF);
+        machine_state = EVENT1;
+        TCNT1        = TSEQ;
+        switching_timer_set_state(ENABLE);
     }
     else
     {
         error();
     }
-}
-
-void ptt_pushed_up_on_relay1_on_fan(void)
-{
-    switching_state = SWITCHING_ON;
-    machine_state = EVENT0;
-    TCNT1         = TREL;
-
-    // test prints
-    uart_puts("bylo zmacknuto tlacitko, zapinam tedy rele 1 a vetron\n");
-    pom = "sw rel1+turn fan   ";
-    
-    timer1_set_state(ENABLE);
-}
-
-void event_ptt_pushed_down_off_ucc(void)
-{
-    switching_state = SWITCHING_OFF;
-    machine_state = EVENT1;
-    TCNT1        = TSEQ;
-
-    // test prints
-    pom = "Switch OFF Ucc    ";
-    uart_puts("bylo pusteno tlacitko, vypinam Ucc\n");
-
-    timer1_set_state(ENABLE);
 }
 
 void error(void)
@@ -80,7 +60,7 @@ void error(void)
     ptt_set_irq(DISABLE); // deny next PTT interrupt
     machine_state = FAULT;        // next EVENT will be FAULT
     TIFR1 |= 1 << TOV1;       // jump quickly to ISR Timer1 into AFTER_FAULT
-    timer1_set_state(ENABLE);
+    switching_timer_set_state(ENABLE);
 }
 
 void ptt_set_irq(state_t state)

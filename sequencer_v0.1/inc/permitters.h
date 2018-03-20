@@ -13,7 +13,6 @@
 #include <avr/io.h>
 
 // ========================================================
-void timer1_set_state(state_t state);    
 void adc_set_state(state_t state);
 uint8_t loop_repeat(state_t state);
 // ========================================================
