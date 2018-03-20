@@ -34,18 +34,13 @@ ISR(TIMER0_OVF_vect)
     ptt_timer(DISABLE);
     if (button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
-        switching_relay1(SWITCHING_ON);
-        switching_fan(SWITCHING_ON);
-        machine_state = EVENT0;
-        TCNT1         = TREL;
-        switching_timer(ENABLE);
+        switching_state = SWITCHING_ON;
+        switching_on_sequence();
     }
     else if (!button_ptt_is_pressed() && machine_state != FAULT && machine_state != AFTER_FAULT)
     {
-        switching_ucc(SWITCHING_OFF);
-        machine_state = EVENT1;
-        TCNT1        = TSEQ;
-        switching_timer(ENABLE);
+        switching_state = SWITCHING_OFF;
+        switching_off_sequence();
     }
     else
     {

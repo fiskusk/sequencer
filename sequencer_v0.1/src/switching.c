@@ -52,6 +52,9 @@ void switching_init(void)
     SWITCHING_FAN_PORT &= ~(1<<SWITCHING_FAN_PIN_NUM);
 
     TIMSK1 |= 1<<TOIE1;
+    
+    machine_state = RELAY1_AND_FAN;
+    switching_state = SWITCHING_OFF;
 }
 
 void switching_timer(state_t state)    // switch, which turn on (1) timer1, or turn off (0)
@@ -96,44 +99,58 @@ void switching_fan(state_t state)
 
 void switching_on_sequence(void)
 {
-    switch(machine_state) // switch jenom na zapnut�,... nakonec celej ten switch jedna funkce switching_on_sequenc
+    switch(machine_state)
     {
-    case EVENT0:
-        switching_relay2(switching_state);
-        TCNT1 = TSEQ;
-        machine_state = EVENT1;
+    case RELAY1_AND_FAN:
+        machine_state = RELAY2;
+        TCNT1         = TREL;
+        switching_relay1(ENABLE);
+        switching_fan(ENABLE);
         switching_timer(ENABLE);
         break;
-    case EVENT1:
-        switching_bias(switching_state);
+    case RELAY2:
         TCNT1 = TSEQ;
-        machine_state = EVENT2;
+        machine_state = RELAY2;
+        switching_relay2(ENABLE);
         switching_timer(ENABLE);
         break;
-    case EVENT2:
-        switching_ucc(switching_state);
-        break;  //koncit to bude vypnutim timeru, chybovy stavy vyhod dopi�e
+    case BIAS:
+        TCNT1 = TSEQ;
+        machine_state = BIAS;
+        switching_bias(ENABLE);
+        switching_timer(ENABLE);
+        break;
+    case UCC:
+        switching_ucc(ENABLE);
+        break;  
     }
 }
 
 void switching_off_sequence(void)
 {
-    switch(machine_state) // switch jenom na zapnut�,... nakonec celej ten switch jedna funkce switching_on_sequenc
+    switch(machine_state)
     {
-    case EVENT0:
-        switching_bias(switching_state);
+    case UCC:
         TCNT1           = TSEQ;
-        machine_state   = EVENT1;
+        machine_state   = BIAS;
+        switching_ucc(DISABLE);
         switching_timer(ENABLE);
         break;
-    case EVENT1:
-        switching_relay2(switching_state);
+    case BIAS:
+        TCNT1           = TSEQ;
+        machine_state   = RELAY2;
+        switching_bias(DISABLE);
+        switching_timer(ENABLE);
+        break;
+    case RELAY2:
         TCNT1           = TREL;
-        machine_state   = EVENT2;
+        machine_state   = RELAY1_AND_FAN;
+        switching_relay2(DISABLE);        
         switching_timer(ENABLE);
         break;
-    case EVENT2:
-        switching_relay1(switching_state);
+    case RELAY1_AND_FAN:
+        switching_relay1(DISABLE);
+        switching_fan(DISABLE);
         break;
     }
 }
@@ -141,7 +158,7 @@ void switching_off_sequence(void)
 ISR(TIMER1_OVF_vect)
 {
     switching_timer(DISABLE);
-    if (state == ENABLE)
+    if (switching_state == SWITCHING_ON)
     {
         switching_on_sequence();
     }

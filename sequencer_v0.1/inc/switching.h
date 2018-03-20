@@ -13,9 +13,10 @@ typedef enum {
 } switching_t;
 
 typedef enum{
-    EVENT0,
-    EVENT1,
-    EVENT2,
+    RELAY1_AND_FAN,
+    RELAY2,
+    BIAS,
+    UCC    
 } sequencer_t;
 
 extern sequencer_t machine_state;                       // default after start up device, go to fault event
