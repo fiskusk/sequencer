@@ -53,8 +53,7 @@ void adc_error_timer(state_t state)
 void adc_get_data(void)
 {
     static uint8_t count = 0;
-    static uint16_t sum  = 0;
-    ++count;
+    static volatile uint16_t sum  = 0;
     switch (adc_active_channel)
     {
         case ADC_CHANNEL_SWR:
@@ -66,8 +65,18 @@ void adc_get_data(void)
             adc_active_channel = ADC_CHANNEL_POWER;
             break;
         case ADC_CHANNEL_POWER:
-            adc_power = ADC;
-            adc_active_channel = ADC_CHANNEL_UCC;
+            ++count;
+            if (count > 2 && count < 6)
+            {
+                sum += ADC;
+                
+            }
+            else if (count >= 6)
+            {
+                adc_power = sum / 3;
+                count        = 0;
+                sum = 0;
+                adc_active_channel = ADC_CHANNEL_SWR;
             break;
         case ADC_CHANNEL_UCC:
             adc_ucc = ADC;
@@ -78,9 +87,11 @@ void adc_get_data(void)
             adc_active_channel = ADC_CHANNEL_TEMP_INT;
             break;
         default:
-            if (count > 3 && count < 6)
+            ++count;
+            if (count > 2 && count < 6)
             {
                 sum += ADC;
+                
             }
             else if (count >= 6)
             {
@@ -88,9 +99,6 @@ void adc_get_data(void)
                 count        = 0;
                 sum = 0;
                 adc_active_channel = ADC_CHANNEL_SWR;
-                uart_putc(adc_temp_int);
-                uart_putc((uint8_t) adc_temp_int >> 8);
-                uart_putc((uint8_t) adc_temp_int && 0x00FF);
             }
             break;
     }
