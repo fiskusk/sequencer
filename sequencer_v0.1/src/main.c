@@ -57,12 +57,12 @@ int main(void)
         lcd_puts("    ");
         lcd_gotoxy(0, 1);
         // for (uint8_t i = 0,i<=)
-        itoa(adc_power, buffer3, 10);
-        uart_puts(buffer3);
-        uart_puts("   ");
+        itoa(adc_temp_int, buffer3, 10);
+       // uart_puts(buffer3);
+        //uart_puts("   ");
         lcd_puts(buffer3);
 
-        des_tvar  = (adc_power * 1.133) / 1024.0;
+        des_tvar  = (adc_temp_int * 1.101) / 1024.0;
         cela_cast = des_tvar;
         desetinna = (des_tvar - (float) cela_cast) * 1000;
         itoa(desetinna, buffer2, 10);
@@ -76,7 +76,7 @@ int main(void)
         
         //(bit_is_set(TIMSK0,TOIE0)) ? (uart_puts("povoleno")) : (uart_puts("zakazano"));
         
-        _delay_ms(500);
+       _delay_ms(250);
     }
     return 0;
 } /* main */
