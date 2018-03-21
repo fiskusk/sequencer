@@ -28,14 +28,14 @@ void adc_init(void)
     // ADENable, ADStart Conversion, ADInterrupt Enable
     // when set ADATE - ADCH MSB, ADCL LSB
     // ADPrescaler Select - 2,2,4,8,16,32,64,128
-    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1<<ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // | (1 << ADATE)
+    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // | (1 << ADATE)
 
     PRR &= ~(1 << PRADC);
 
     TIMSK2 |= 1 << TOIE2;
-    
-    DDRC &= 0b11100000;         // ADC0-4 as output
-    PORTC &= 0b11100000;        //ADC0-4 pull-up turn off
+
+    DDRC  &= 0b11100000; // ADC0-4 as output
+    PORTC &= 0b11100000; // ADC0-4 pull-up turn off
 }
 
 void adc_error_timer(state_t state)
@@ -53,8 +53,8 @@ void adc_error_timer(state_t state)
 void adc_get_data(void)
 {
     static uint8_t count = 0;
-    static uint16_t sum = 0;
-    count++;
+    static uint16_t sum  = 0;
+    ++count;
     switch (adc_active_channel)
     {
         case ADC_CHANNEL_SWR:
@@ -78,23 +78,24 @@ void adc_get_data(void)
             adc_active_channel = ADC_CHANNEL_TEMP_INT;
             break;
         default:
-            if (count < 3);
-            else if (count < 6)
-                sum += ADC;
-            else
+            if (count < 6)
             {
-                adc_temp_int       = ADC;
-                count = 0;
+                sum += ADC;
+            }
+            else if (count >= 6)
+            {
+                adc_temp_int = sum / 3;
+                count        = 0;
                 sum = 0;
                 adc_active_channel = ADC_CHANNEL_SWR;
                 uart_putc(adc_temp_int);
-                //uart_putc((uint8_t)adc_temp_int >> 8);
-                //uart_putc((uint8_t)adc_temp_int && 0x00FF);
+                uart_putc((uint8_t) adc_temp_int >> 8);
+                uart_putc((uint8_t) adc_temp_int && 0x00FF);
             }
             break;
     }
     ADMUX = (ADMUX & 0xF0) | adc_active_channel;
-}
+} /* adc_get_data */
 
 result_t adc_check_swr(void)
 {
@@ -128,7 +129,7 @@ void adc_evaluation(void)
 }
 
 ISR(ADC_vect)
-{   
+{
     cli();
     adc_get_data();
     adc_evaluation();
