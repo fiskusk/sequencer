@@ -78,7 +78,7 @@ void adc_get_data(void)
             adc_active_channel = ADC_CHANNEL_TEMP_INT;
             break;
         default:
-            if (count < 6)
+            if (count > 3 && count < 6)
             {
                 sum += ADC;
             }
