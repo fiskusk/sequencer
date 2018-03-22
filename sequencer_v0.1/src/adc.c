@@ -1,8 +1,8 @@
 #include "adc.h"
 
-#define ADC_SWR_VOLTAGE_MAX   1023
+#define ADC_SWR_VOLTAGE_MAX   800
 
-#define ADC_TEMP_HEATSINK_MAX 1023
+#define ADC_TEMP_HEATSINK_MAX 600
 
 #define ADC_TEMP_INT_MAX      1023
 
@@ -57,47 +57,74 @@ void adc_get_data(void)
     switch (adc_active_channel)
     {
         case ADC_CHANNEL_SWR:
-            adc_swr = ADC;
-            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+            ++count;
+            if (count > 2 && count < 6)
+                sum += ADC;
+            else if (count >= 6)
+            {
+                adc_swr = sum / 3;
+                count        = 0;
+                sum = 0;
+                adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+            }
             break;
         case ADC_CHANNEL_TEMP_HEATSINK:
-            adc_temp_heatsink  = ADC;
-            adc_active_channel = ADC_CHANNEL_POWER;
+            ++count;
+            if (count > 2 && count < 6)
+                sum += ADC;
+            else if (count >= 6)
+            {
+                adc_temp_heatsink = sum / 3;
+                count        = 0;
+                sum = 0;
+                adc_active_channel = ADC_CHANNEL_POWER;
+            }
             break;
         case ADC_CHANNEL_POWER:
             ++count;
             if (count > 2 && count < 6)
-            {
                 sum += ADC;
-                
-            }
             else if (count >= 6)
             {
                 adc_power = sum / 3;
                 count        = 0;
                 sum = 0;
-                adc_active_channel = ADC_CHANNEL_SWR;
+                adc_active_channel = ADC_CHANNEL_UCC;
+            }
             break;
         case ADC_CHANNEL_UCC:
-            adc_ucc = ADC;
-            adc_active_channel = ADC_CHANNEL_ICC;
+            ++count;
+            if (count > 2 && count < 6)
+                sum += ADC;
+            else if (count >= 6)
+            {
+                adc_ucc = sum / 3;
+                count        = 0;
+                sum          = 0;
+                adc_active_channel = ADC_CHANNEL_ICC;
+            }
             break;
         case ADC_CHANNEL_ICC:
-            adc_icc = ADC;
-            adc_active_channel = ADC_CHANNEL_TEMP_INT;
+            ++count;
+            if (count > 2 && count < 8)
+                sum += ADC;
+            else if (count >= 6)
+            {
+                adc_icc = sum / 3;
+                count   = 0;
+                sum     = 0;
+                adc_active_channel = ADC_CHANNEL_TEMP_INT;
+            }
             break;
         default:
             ++count;
-            if (count > 2 && count < 6)
-            {
+            if (count > 2 && count < 8)
                 sum += ADC;
-                
-            }
-            else if (count >= 6)
+            else if (count >= 8)
             {
                 adc_temp_int = sum / 3;
                 count        = 0;
-                sum = 0;
+                sum          = 0;
                 adc_active_channel = ADC_CHANNEL_SWR;
             }
             break;
@@ -129,11 +156,14 @@ void adc_evaluation(void)
     {
         switching_state = SWITCHING_OFF;
         ptt_set_irq(DISABLE);
+        pom = "HI SWR";
         adc_error_timer(ENABLE);
         switching_off_sequence();
     }
-    if (adc_check_temp() == ERROR)
+    if (adc_check_temp() == ERROR ||  switching_state == SWITCHING_ON)
         SWITCHING_FAN_ON;
+    else
+        SWITCHING_FAN_OFF;
 }
 
 ISR(ADC_vect)
@@ -148,9 +178,10 @@ ISR(ADC_vect)
 ISR(TIMER2_OVF_vect)
 {
     static uint16_t timer_ovf_count = 0;
-    if (++timer_ovf_count > 183) // 20s 1225 3s 183
+    if (++timer_ovf_count > 1225) // 20s 1225 3s 183
     {
         timer_ovf_count = 0;
+        pom = "SWR OK";
         adc_error_timer(DISABLE);
         ptt_set_irq(ENABLE);
     }

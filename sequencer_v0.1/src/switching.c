@@ -35,36 +35,41 @@ void switching_timer(state_t state) // switch, which turn on (1) timer1, or turn
 
 void switching_relay1(state_t state)
 {
-    uart_puts("rele 1\n");
-    pom = "rel1   ";
+    //uart_puts("rele 1\n");
+    if (adc_check_swr() == SUCCESS)
+        pom = "rel1   ";
     (state == ENABLE) ? SWITCHING_RELAY1_ON : SWITCHING_RELAY1_OFF;
 }
 
 void switching_relay2(state_t state)
 {
-    uart_puts("rele 2\n");
-    pom = "rel2    ";
+    //uart_puts("rele 2\n");
+    if (adc_check_swr() == SUCCESS)
+        pom = "rel2    ";
     (state == ENABLE) ? (SWITCHING_RELAY2_ON) : (SWITCHING_RELAY2_OFF);
 }
 
 void switching_bias(state_t state)
 {
-    uart_puts("bias\n");
-    pom = "bias    ";
+    //uart_puts("bias\n");
+    if (adc_check_swr() == SUCCESS)
+        pom = "bias    ";
     (state == ENABLE) ? (SWITCHING_BIAS_ON) : (SWITCHING_BIAS_OFF);
 }
 
 void switching_ucc(state_t state)
 {
-    pom = "Ucc    ";
-    uart_puts("ucc\n");
+    if (adc_check_swr() == SUCCESS)
+        pom = "Ucc    ";
+    //uart_puts("ucc\n");
     (state == ENABLE) ? (SWITCHING_UCC_ON) : (SWITCHING_UCC_OFF);
 }
 
 void switching_fan(state_t state)
 {
-    uart_puts("fan\n");
-    pom = "fan     ";
+    //uart_puts("fan\n");
+    if (adc_check_swr() == SUCCESS)
+        pom = "fan     ";
     if (adc_check_temp() == ERROR)
         SWITCHING_FAN_ON;
     else
