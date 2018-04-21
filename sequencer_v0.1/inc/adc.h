@@ -19,8 +19,12 @@ typedef enum {
     ADC_CHANNEL_POWER         = 2,
     ADC_CHANNEL_UCC           = 7,
     ADC_CHANNEL_ICC           = 6,
-    ADC_CHANNEL_TEMP_INT      = 8
 } adc_channel_t;
+
+typedef enum {
+    BLOCK_ONLY,
+    BLOCK_TIMER,
+} adc_block_t;
 
 
 extern volatile uint16_t adc_swr;

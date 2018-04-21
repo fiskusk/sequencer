@@ -1,26 +1,24 @@
 #include "switching.h"
-
-
-#define TSEQ 62411  // Time delay between of two sequence
-#define TREL 65535 // Delay between servo1 and servo2. They must switch simultaneously.
-
+#include "settings.h"
 
 sequencer_t machine_state;
 switching_t switching_state;
 
 void switching_init(void)
 {
-    SWITCHING_RELAY1_DDR |= 1 << SWITCHING_RELAY1_PIN_NUM;
-    SWITCHING_RELAY2_DDR |= 1 << SWITCHING_RELAY2_PIN_NUM;
-    SWITCHING_BIAS_DDR   |= 1 << SWITCHING_BIAS_PIN_NUM;
-    SWITCHING_UCC_DDR    |= 1 << SWITCHING_UCC_PIN_NUM;
-    SWITCHING_FAN_DDR    |= 1 << SWITCHING_FAN_PIN_NUM;
+    SWITCHING_STATUS_LED_DDR    |= 1 << SWITCHING_STATUS_LED_PIN_NUM;
+    SWITCHING_RELAY1_DDR        |= 1 << SWITCHING_RELAY1_PIN_NUM;
+    SWITCHING_RELAY2_DDR        |= 1 << SWITCHING_RELAY2_PIN_NUM;
+    SWITCHING_BIAS_DDR          |= 1 << SWITCHING_BIAS_PIN_NUM;
+    SWITCHING_UCC_DDR           |= 1 << SWITCHING_UCC_PIN_NUM;
+    SWITCHING_FAN_DDR           |= 1 << SWITCHING_FAN_PIN_NUM;
 
-    SWITCHING_RELAY1_PORT &= ~(1 << SWITCHING_RELAY1_PIN_NUM);
-    SWITCHING_RELAY2_PORT &= ~(1 << SWITCHING_RELAY2_PIN_NUM);
-    SWITCHING_BIAS_PORT   &= ~(1 << SWITCHING_BIAS_PIN_NUM);
-    SWITCHING_UCC_PORT    &= ~(1 << SWITCHING_UCC_PIN_NUM);
-    SWITCHING_FAN_PORT    &= ~(1 << SWITCHING_FAN_PIN_NUM);
+    SWITCHING_STATUS_LED_PORT    &= ~(1 << SWITCHING_STATUS_LED_PIN_NUM);
+    SWITCHING_RELAY1_PORT       &= ~(1 << SWITCHING_RELAY1_PIN_NUM);
+    SWITCHING_RELAY2_PORT       &= ~(1 << SWITCHING_RELAY2_PIN_NUM);
+    SWITCHING_BIAS_PORT         &= ~(1 << SWITCHING_BIAS_PIN_NUM);
+    SWITCHING_UCC_PORT          &= ~(1 << SWITCHING_UCC_PIN_NUM);
+    SWITCHING_FAN_PORT          &= ~(1 << SWITCHING_FAN_PIN_NUM);
 
     TIMSK1 |= 1 << TOIE1;
 
@@ -31,6 +29,11 @@ void switching_init(void)
 void switching_timer(state_t state) // switch, which turn on (1) timer1, or turn off (0)
 {
     (state == ENABLE) ? (TCCR1B |= (1 << CS12)) : (TCCR1B &= ~(1 << CS12));
+}
+
+void switching_status_led(state_t state)
+{
+    (state == ENABLE) ? SWITCHING_STATUS_LED_ON : SWITCHING_STATUS_LED_OFF;
 }
 
 void switching_relay1(state_t state)
@@ -139,12 +142,16 @@ void switching_off_sequence(void)
 ISR(TIMER1_OVF_vect)
 {
     switching_timer(DISABLE);
-    if (switching_state == SWITCHING_ON)
+    if (button_ptt_is_pressed())
     {
+        switching_state = SWITCHING_ON;
+        pom = "TX";
         switching_on_sequence();
     }
     else
     {
+        switching_state = SWITCHING_OFF;
+        pom = "RX";
         switching_off_sequence();
     }
 }

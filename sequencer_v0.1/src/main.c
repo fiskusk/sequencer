@@ -115,6 +115,19 @@ int main(void)
                 lcd_gotoxy(0,2);
                 lcd_puts("HEATSINK TEMP HI");
                 break;
+            case UI_VOLTAGE_BEYOND_LIM:
+                lcd_gotoxy(0,1);
+                lcd_puts("  POWER SUPPLY  ");
+                lcd_gotoxy(0,2);
+                lcd_puts("VOLT. BEYOND LIM");
+                break;
+             case UI_CURRENT_OVERLOAD:
+                lcd_gotoxy(0,1);
+                lcd_puts(" SUPPLY CURRENT ");
+                lcd_gotoxy(0,2);
+                sprintf_P(buffer, PSTR("EXCEEDED 40A %2ds"), 20 - (timer_ovf_count / 61) );
+                lcd_puts(buffer);
+                break;
             
             default:
                 ui_state = UI_RUN;
@@ -161,50 +174,7 @@ int main(void)
         lcd_gotoxy(14,0);
         lcd_puts(pom);
         
-        // print REF power
-        
-        
 
-
-        /*
-        lcd_gotoxy(0, 0);
-        lcd_puts(pom);
-        lcd_puts("           ");
-
-        lcd_gotoxy(0, 1);
-        lcd_puts("    ");
-        lcd_gotoxy(0, 1);
-        // for (uint8_t i = 0,i<=)
-        itoa(adc_power, buffer3, 10);
-       // uart_puts(buffer3);
-        //uart_puts("   ");
-        lcd_puts("POWER ");
-        lcd_puts(buffer3);
-
-        des_tvar  = (adc_temp_heatsink * 2.541) / 1024.0;
-        cela_cast = des_tvar;
-        desetinna = (des_tvar - (float) cela_cast) * 1000;
-        itoa(desetinna, buffer2, 10);
-        itoa(cela_cast, buffer, 10);
-
-        lcd_gotoxy(9, 1);
-        lcd_puts(buffer);
-        lcd_putc(',');
-        if (desetinna <= 9)
-        {
-            lcd_puts("00");
-        }
-        else if (desetinna <= 99 )
-        {
-            lcd_puts("0");
-        }                
-        lcd_puts(buffer2);
-        lcd_puts(" V  ");
-        
-        //(bit_is_set(TIMSK0,TOIE0)) ? (uart_puts("povoleno")) : (uart_puts("zakazano"));
-        
-       _delay_ms(50);
-       */
     }
     return 0;
 } /* main */

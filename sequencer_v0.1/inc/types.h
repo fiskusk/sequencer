@@ -19,6 +19,8 @@ typedef enum {
     UI_RUN,
     UI_HI_SWR,
     UI_HI_TEMP,
+    UI_VOLTAGE_BEYOND_LIM,
+    UI_CURRENT_OVERLOAD,
 } ui_state_t;
 
 #endif // TYPES_H_INCLUDED

@@ -1,12 +1,5 @@
 #include "ptt.h"
 
-#define PTT_DDR     DDRD
-#define PTT_PORT    PORTD
-#define PTT_PIN     PIND
-#define PTT_PIN_NUM 2
-
-#define button_ptt_is_pressed() bit_is_set(PTT_PIN, PTT_PIN_NUM)
-
 void ptt_init(void)
 {
     // INT0 init
@@ -15,17 +8,17 @@ void ptt_init(void)
     EICRA    |= 1 << ISC00;             // any logical change INT0 generate interrupt
 
     // timer 0 init
-    TIMSK0 |= 1<<TOIE0;
+    //TIMSK0 |= 1<<TOIE0;
     
 }
 
-void ptt_timer(state_t state)
-{
-    if (state == ENABLE)
-        TCCR0B = (1 << CS02) | (1 << CS00);
-    else
-        TCCR0B &= ~((1 << CS02) | (1 << CS00));
-}
+//void ptt_timer(state_t state)
+//{
+    //if (state == ENABLE)
+        //TCCR0B = (1 << CS02) | (1 << CS00);
+    //else
+        //TCCR0B &= ~((1 << CS02) | (1 << CS00));
+//}
 
 void ptt_set_irq(state_t state)
 {
@@ -34,23 +27,23 @@ void ptt_set_irq(state_t state)
 
 ISR(INT0_vect)
 {
-    TCNT0 = 156;
-    ptt_timer(ENABLE);
+    TCNT1 = 65000;
+    switching_timer(ENABLE);
 }
 
-ISR(TIMER0_OVF_vect)
-{
-    ptt_timer(DISABLE);
-    if (button_ptt_is_pressed())
-    {
-        switching_state = SWITCHING_ON;
-        pom = "TX";
-        switching_on_sequence();
-    }
-    else
-    {
-        switching_state = SWITCHING_OFF;
-        pom = "RX";
-        switching_off_sequence();
-    }
-}
+//ISR(TIMER0_OVF_vect)
+//{
+    //ptt_timer(DISABLE);
+    //if (button_ptt_is_pressed())
+    //{
+        //switching_state = SWITCHING_ON;
+        //pom = "TX";
+        //switching_on_sequence();
+    //}
+    //else
+    //{
+        //switching_state = SWITCHING_OFF;
+        //pom = "RX";
+        //switching_off_sequence();
+    //}
+//}

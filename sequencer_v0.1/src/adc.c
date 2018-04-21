@@ -1,21 +1,8 @@
 #include "adc.h"
-
-#define R_DIV   10000
-#define R_REF   19000
-#define A1		3.354016e-03
-#define B1		2.569850e-04
-#define C1		2.620131e-06
-#define D1		6.383091e-08
-
-#define ADC_SWR_VOLTAGE_MAX         800
-
-#define ADC_TEMP_HEATSINK_MAX       670             // Turn fan
-#define ADC_TEMP_HEATSINK_ABS_MAX   600             // Overheat, turn all, block, turn fan
-
-#define ADC_TEMP_INT_MAX            1023
-#define ADC_TEMP_INT_ABS_MAX        1023
+#include "settings.h"
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
+adc_block_t adc_block;
 
 volatile uint16_t adc_swr;
 volatile uint16_t adc_swr_cache;
@@ -79,14 +66,18 @@ uint8_t adc_get_temp(void)
     return temp;
 }
 
-void adc_block_pa(void)
+void adc_block_pa(adc_block_t adc_block)
 {
     switching_state = SWITCHING_OFF;
-    timer_ovf_count = 0;
+    timer_ovf_count = 1220;
     ptt_set_irq(DISABLE);
     switching_off_sequence();
     pom = "HI";
-    adc_error_timer(ENABLE);
+    if (adc_block == BLOCK_TIMER)
+    {
+        timer_ovf_count = 0;
+        adc_error_timer(ENABLE);    
+    }
 }
 
 void adc_get_data(void)
@@ -143,7 +134,7 @@ void adc_get_data(void)
                 adc_active_channel = ADC_CHANNEL_ICC;
             }
             break;
-        case ADC_CHANNEL_ICC:
+        default:
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
@@ -152,18 +143,6 @@ void adc_get_data(void)
                 adc_icc = sum / 3;
                 count   = 0;
                 sum     = 0;
-                adc_active_channel = ADC_CHANNEL_TEMP_INT;
-            }
-            break;
-        default:
-            ++count;
-            if (count > 2 && count < 6)
-                sum += ADC;
-            else if (count >= 6)
-            {
-                adc_temp_int = sum / 3;
-                count        = 0;
-                sum          = 0;
                 adc_active_channel = ADC_CHANNEL_SWR;
             }
             break;
@@ -185,11 +164,25 @@ result_t adc_check_temp(void)
         return ERROR;
     else if (adc_temp_heatsink <= ADC_TEMP_HEATSINK_ABS_MAX)
         return BIG_ERROR;
-    else if (adc_temp_int > ADC_TEMP_INT_MAX)
-        return ERROR;
-    else if (adc_temp_int > ADC_TEMP_INT_ABS_MAX)
-        return BIG_ERROR;
+    
+    return SUCCESS;
+}
 
+result_t adc_check_ucc(void)
+{
+    if (adc_ucc < ADC_UCC_MIN)
+        return ERROR;
+    else if (adc_ucc > ADC_UCC_MAX)
+        return ERROR;
+    
+    return SUCCESS;
+}
+
+result_t adc_check_icc(void)
+{
+    if (adc_icc > ADC_ICC_MAX)
+        return ERROR;
+    
     return SUCCESS;
 }
 
@@ -199,26 +192,48 @@ void adc_evaluation(void)
     {
         adc_swr_cache = adc_swr;
         ui_state = UI_HI_SWR;
-        adc_block_pa();
+        adc_block_pa(BLOCK_TIMER);
     }
     if (adc_check_temp() == BIG_ERROR)
     {
         ui_state = UI_HI_TEMP;
-        adc_block_pa();
+        adc_block_pa(BLOCK_TIMER);
+    }
+    if (adc_check_ucc() == ERROR)
+    {
+        ui_state = UI_VOLTAGE_BEYOND_LIM;
+        adc_block_pa(BLOCK_ONLY);
+    }
+    if (adc_check_icc() == ERROR)
+    {
+        ui_state = UI_CURRENT_OVERLOAD;
+        adc_block_pa(BLOCK_TIMER);
     }
     if (adc_check_temp() == ERROR || adc_check_temp() == BIG_ERROR || switching_state == SWITCHING_ON)
         SWITCHING_FAN_ON;
     else
         SWITCHING_FAN_OFF;
-    
 }
 
 ISR(ADC_vect)
 {
+    static uint16_t adc_ovf_count = 0;
+    static state_t state_led = ENABLE;
     cli();
     adc_get_data();
     if (ui_state != UI_INIT)
         adc_evaluation();
+        
+    //if (++adc_ovf_count > 1000)
+    //{
+        //adc_ovf_count = 0;
+        //switching_status_led(state_led);
+        //if (state_led == ENABLE)
+            //state_led = DISABLE;
+        //else
+            //state_led = ENABLE;
+    //}
+    
     sei();
     ADCSRA |= 1 << ADSC;
 }
