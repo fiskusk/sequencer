@@ -71,9 +71,9 @@ void switching_ucc(state_t state)
 void switching_fan(state_t state)
 {
     //uart_puts("fan\n");
-    if (adc_check_swr() == SUCCESS)
+    if (adc_check_temp() ==  SUCCESS)
         (state == ENABLE) ? (SWITCHING_FAN_ON) : (SWITCHING_FAN_OFF);
-    else if (adc_check_temp() == ERROR)
+    else
         SWITCHING_FAN_ON;
     
 }

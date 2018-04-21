@@ -11,8 +11,8 @@ void ptt_init(void)
 {
     // INT0 init
     PTT_DDR  &= ~(1 << PTT_PIN_NUM);
-    //PTT_PORT |= 1 << PTT_PIN_NUM;
-    EICRA    |= 1 << ISC00; // any logical change INT0 generate interrupt
+    //PTT_PORT |= 1 << PTT_PIN_NUM;     // PTT button on port dont have pull-up
+    EICRA    |= 1 << ISC00;             // any logical change INT0 generate interrupt
 
     // timer 0 init
     TIMSK0 |= 1<<TOIE0;

@@ -9,8 +9,8 @@
 
 #define ADC_SWR_VOLTAGE_MAX         800
 
-#define ADC_TEMP_HEATSINK_MAX       660
-#define ADC_TEMP_HEATSINK_ABS_MAX   650
+#define ADC_TEMP_HEATSINK_MAX       670             // Turn fan
+#define ADC_TEMP_HEATSINK_ABS_MAX   600             // Overheat, turn all, block, turn fan
 
 #define ADC_TEMP_INT_MAX            1023
 #define ADC_TEMP_INT_ABS_MAX        1023
@@ -18,6 +18,7 @@
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
 
 volatile uint16_t adc_swr;
+volatile uint16_t adc_swr_cache;
 volatile uint16_t adc_ucc;
 volatile uint16_t adc_icc;
 volatile uint16_t adc_power;
@@ -76,6 +77,16 @@ uint8_t adc_get_temp(void)
     temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
     
     return temp;
+}
+
+void adc_block_pa(void)
+{
+    switching_state = SWITCHING_OFF;
+    timer_ovf_count = 0;
+    ptt_set_irq(DISABLE);
+    switching_off_sequence();
+    pom = "HI";
+    adc_error_timer(ENABLE);
 }
 
 void adc_get_data(void)
@@ -170,9 +181,9 @@ result_t adc_check_swr(void)
 
 result_t adc_check_temp(void)
 {
-    if (adc_temp_heatsink < ADC_TEMP_HEATSINK_MAX)
+    if (adc_temp_heatsink < ADC_TEMP_HEATSINK_MAX && adc_temp_heatsink > ADC_TEMP_HEATSINK_ABS_MAX)
         return ERROR;
-    else if (adc_temp_heatsink < ADC_TEMP_HEATSINK_ABS_MAX)
+    else if (adc_temp_heatsink <= ADC_TEMP_HEATSINK_ABS_MAX)
         return BIG_ERROR;
     else if (adc_temp_int > ADC_TEMP_INT_MAX)
         return ERROR;
@@ -186,26 +197,28 @@ void adc_evaluation(void)
 {
     if (adc_check_swr() == ERROR)
     {
-        switching_state = SWITCHING_OFF;
-        timer_ovf_count = 0;
-        ptt_set_irq(DISABLE);
-        switching_off_sequence();
-        pom = "HI";
-        ui_state = UI_ERROR;
-        adc_error_timer(ENABLE);
+        adc_swr_cache = adc_swr;
+        ui_state = UI_HI_SWR;
+        adc_block_pa();
     }
-    if (adc_check_temp() == ERROR ||  switching_state == SWITCHING_ON)
+    if (adc_check_temp() == BIG_ERROR)
+    {
+        ui_state = UI_HI_TEMP;
+        adc_block_pa();
+    }
+    if (adc_check_temp() == ERROR || adc_check_temp() == BIG_ERROR || switching_state == SWITCHING_ON)
         SWITCHING_FAN_ON;
     else
         SWITCHING_FAN_OFF;
-    //if (adc_check_temp() == BIG_ERROR)
+    
 }
 
 ISR(ADC_vect)
 {
     cli();
     adc_get_data();
-    adc_evaluation();
+    if (ui_state != UI_INIT)
+        adc_evaluation();
     sei();
     ADCSRA |= 1 << ADSC;
 }

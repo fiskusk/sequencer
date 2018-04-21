@@ -34,7 +34,9 @@ void setup(void)
     uart_init();           // initialization UART
     
     ui_state = UI_INIT;
-           
+    
+    sei(); // enable all interrupts
+     
 }
 
 int main(void)
@@ -80,7 +82,6 @@ int main(void)
                 lcd_puts("U=  . V  I=  . A");
             
                 pom = "OK";
-                sei(); // enable all interrupts
                 ui_state = UI_RUN;
                 break;
             
@@ -89,12 +90,30 @@ int main(void)
                 sprintf_P(buffer, PSTR("OUT POWER %4d W"),cela_cast);
                 lcd_gotoxy(0,1);
                 lcd_puts(buffer);
+                
+                cela_cast  = (((adc_swr * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
+                sprintf_P(buffer, PSTR("REF.POWER %4d W"),cela_cast);
+                lcd_gotoxy(0,2);
+                lcd_puts(buffer);
                 break;
             
-            case UI_ERROR:
+            case UI_HI_SWR:
                 sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 20 - (timer_ovf_count / 61) );
                 lcd_gotoxy(0,1);
                 lcd_puts(buffer);
+                
+                sprintf_P(buffer, PSTR("HIGH SWR %3d    "),adc_swr_cache );
+                lcd_gotoxy(0,2);
+                lcd_puts(buffer);
+                break;
+                
+            case UI_HI_TEMP:
+                sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 20 - (timer_ovf_count / 61) );
+                lcd_gotoxy(0,1);
+                lcd_puts(buffer);
+                
+                lcd_gotoxy(0,2);
+                lcd_puts("HEATSINK TEMP HI");
                 break;
             
             default:
@@ -143,10 +162,7 @@ int main(void)
         lcd_puts(pom);
         
         // print REF power
-        cela_cast  = (((adc_swr * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
-        sprintf_P(buffer, PSTR("%4d"),cela_cast);
-        lcd_gotoxy(10,2);
-        lcd_puts(buffer);
+        
         
 
 

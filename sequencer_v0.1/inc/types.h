@@ -17,7 +17,8 @@ typedef enum {
 typedef enum {
     UI_INIT,
     UI_RUN,
-    UI_ERROR,
+    UI_HI_SWR,
+    UI_HI_TEMP,
 } ui_state_t;
 
 #endif // TYPES_H_INCLUDED

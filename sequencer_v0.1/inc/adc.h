@@ -24,6 +24,7 @@ typedef enum {
 
 
 extern volatile uint16_t adc_swr;
+extern volatile uint16_t adc_swr_cache;
 extern volatile uint16_t adc_ucc;
 extern volatile uint16_t adc_icc;
 extern volatile uint16_t adc_power;
