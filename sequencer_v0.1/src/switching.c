@@ -28,7 +28,7 @@ void switching_init(void)
 
 void switching_timer(state_t state) // switch, which turn on (1) timer1, or turn off (0)
 {
-    (state == ENABLE) ? (TCCR1B |= (1 << CS12)) : (TCCR1B &= ~(1 << CS12));
+    (state == ENABLE) ? (TCCR1B |= (1 << CS12)) : (TCCR1B &= ~(1 << CS12)); // div 256
 }
 
 void switching_status_led(state_t state)

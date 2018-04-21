@@ -75,9 +75,9 @@ void adc_block_pa(adc_block_t adc_block)
     pom = "HI";
     if (adc_block == BLOCK_TIMER)
     {
-        timer_ovf_count = 0;
-        adc_error_timer(ENABLE);    
+        timer_ovf_count = 0;  
     }
+    adc_error_timer(ENABLE);  
 }
 
 void adc_get_data(void)
@@ -217,8 +217,8 @@ void adc_evaluation(void)
 
 ISR(ADC_vect)
 {
-    static uint16_t adc_ovf_count = 0;
-    static state_t state_led = ENABLE;
+    //static uint16_t adc_ovf_count = 0;
+    //static state_t state_led = ENABLE;
     cli();
     adc_get_data();
     if (ui_state != UI_INIT)

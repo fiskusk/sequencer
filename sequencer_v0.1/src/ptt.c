@@ -14,8 +14,8 @@ void ptt_init(void)
 
 //void ptt_timer(state_t state)
 //{
-    //if (state == ENABLE)
-        //TCCR0B = (1 << CS02) | (1 << CS00);
+    //if (state == ENABLE)                      
+        //TCCR0B = (1 << CS02) | (1 << CS00);       // div 1024
     //else
         //TCCR0B &= ~((1 << CS02) | (1 << CS00));
 //}
@@ -27,7 +27,7 @@ void ptt_set_irq(state_t state)
 
 ISR(INT0_vect)
 {
-    TCNT1 = 65000;
+    TCNT1 = 64911;
     switching_timer(ENABLE);
 }
 

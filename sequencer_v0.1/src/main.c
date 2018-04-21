@@ -21,9 +21,9 @@ volatile ui_state_t ui_state = UI_INIT;
 void setup(void)
 {
     // setup ports
-    DDRB |= 0b01111111;          // set display pins as output (H output)
     DDRC  = (1 << 5) | (1 << 6); // set PORTC5 as output
-
+    
+      
     ptt_init();
     adc_init();
     switching_init();
