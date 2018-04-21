@@ -5,19 +5,18 @@
 #define PTT_PIN     PIND
 #define PTT_PIN_NUM 2
 
-#define button_ptt_is_pressed() bit_is_clear(PTT_PIN, PTT_PIN_NUM)
+#define button_ptt_is_pressed() bit_is_set(PTT_PIN, PTT_PIN_NUM)
 
 void ptt_init(void)
 {
     // INT0 init
     PTT_DDR  &= ~(1 << PTT_PIN_NUM);
-    PTT_PORT |= 1 << PTT_PIN_NUM;
+    //PTT_PORT |= 1 << PTT_PIN_NUM;
     EICRA    |= 1 << ISC00; // any logical change INT0 generate interrupt
 
     // timer 0 init
     TIMSK0 |= 1<<TOIE0;
     
-    ptt_set_irq(ENABLE);
 }
 
 void ptt_timer(state_t state)
@@ -45,11 +44,13 @@ ISR(TIMER0_OVF_vect)
     if (button_ptt_is_pressed())
     {
         switching_state = SWITCHING_ON;
+        pom = "TX";
         switching_on_sequence();
     }
     else
     {
         switching_state = SWITCHING_OFF;
+        pom = "RX";
         switching_off_sequence();
     }
 }

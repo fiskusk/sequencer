@@ -1,8 +1,8 @@
 #include "switching.h"
 
 
-#define TSEQ 500  // Time delay between of two sequence
-#define TREL 5000 // Delay between servo1 and servo2. They must switch simultaneously.
+#define TSEQ 62411  // Time delay between of two sequence
+#define TREL 65535 // Delay between servo1 and servo2. They must switch simultaneously.
 
 
 sequencer_t machine_state;
@@ -37,43 +37,45 @@ void switching_relay1(state_t state)
 {
     //uart_puts("rele 1\n");
     if (adc_check_swr() == SUCCESS)
-        pom = "rel1   ";
-    (state == ENABLE) ? SWITCHING_RELAY1_ON : SWITCHING_RELAY1_OFF;
+        (state == ENABLE) ? SWITCHING_RELAY1_ON : SWITCHING_RELAY1_OFF;
+    else
+        SWITCHING_RELAY1_OFF;
 }
 
 void switching_relay2(state_t state)
 {
     //uart_puts("rele 2\n");
     if (adc_check_swr() == SUCCESS)
-        pom = "rel2    ";
-    (state == ENABLE) ? (SWITCHING_RELAY2_ON) : (SWITCHING_RELAY2_OFF);
+        (state == ENABLE) ? (SWITCHING_RELAY2_ON) : (SWITCHING_RELAY2_OFF);
+    else
+        SWITCHING_RELAY2_OFF;
 }
 
 void switching_bias(state_t state)
 {
     //uart_puts("bias\n");
-    if (adc_check_swr() == SUCCESS)
-        pom = "bias    ";
-    (state == ENABLE) ? (SWITCHING_BIAS_ON) : (SWITCHING_BIAS_OFF);
+    if (adc_check_swr() ==  SUCCESS)
+        (state == ENABLE) ? (SWITCHING_BIAS_ON) : (SWITCHING_BIAS_OFF);
+    else
+        SWITCHING_BIAS_OFF;
 }
 
 void switching_ucc(state_t state)
 {
     if (adc_check_swr() == SUCCESS)
-        pom = "Ucc    ";
-    //uart_puts("ucc\n");
-    (state == ENABLE) ? (SWITCHING_UCC_ON) : (SWITCHING_UCC_OFF);
+        (state == ENABLE) ? (SWITCHING_UCC_ON) : (SWITCHING_UCC_OFF);
+    else
+        SWITCHING_UCC_OFF;
 }
 
 void switching_fan(state_t state)
 {
     //uart_puts("fan\n");
     if (adc_check_swr() == SUCCESS)
-        pom = "fan     ";
-    if (adc_check_temp() == ERROR)
-        SWITCHING_FAN_ON;
-    else
         (state == ENABLE) ? (SWITCHING_FAN_ON) : (SWITCHING_FAN_OFF);
+    else if (adc_check_temp() == ERROR)
+        SWITCHING_FAN_ON;
+    
 }
 
 void switching_on_sequence(void)

@@ -1,10 +1,19 @@
 #include "adc.h"
 
-#define ADC_SWR_VOLTAGE_MAX   800
+#define R_DIV   10000
+#define R_REF   19000
+#define A1		3.354016e-03
+#define B1		2.569850e-04
+#define C1		2.620131e-06
+#define D1		6.383091e-08
 
-#define ADC_TEMP_HEATSINK_MAX 600
+#define ADC_SWR_VOLTAGE_MAX         800
 
-#define ADC_TEMP_INT_MAX      1023
+#define ADC_TEMP_HEATSINK_MAX       660
+#define ADC_TEMP_HEATSINK_ABS_MAX   650
+
+#define ADC_TEMP_INT_MAX            1023
+#define ADC_TEMP_INT_ABS_MAX        1023
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
 
@@ -14,6 +23,9 @@ volatile uint16_t adc_icc;
 volatile uint16_t adc_power;
 volatile uint16_t adc_temp_int;
 volatile uint16_t adc_temp_heatsink;
+volatile uint16_t timer_ovf_count = 0; 
+
+extern volatile ui_state_t ui_state;
 
 void adc_init(void)
 {
@@ -23,7 +35,10 @@ void adc_init(void)
     // 1. AVCC with external cap at AREF pin,
     // 2. reserved
     // 3. Internal 1,1V voltage ref. with external cap on AREF pin
-    ADMUX = (1 << REFS1) | (1 << REFS0);
+    
+    // active is AREF, Internal Vref turned OFF now!!!!!!
+    
+    //ADMUX = (1 << REFS1) | (1 << REFS0); 
 
     // ADENable, ADStart Conversion, ADInterrupt Enable
     // when set ADATE - ADCH MSB, ADCL LSB
@@ -42,12 +57,25 @@ void adc_error_timer(state_t state)
 {
     if (state == ENABLE)
     {
-        TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);
+        TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);
     }
     else
     {
         TCCR2B &= ~((1 << CS22) | (1 << CS21) | (1 << CS20));
     }
+}
+
+uint8_t adc_get_temp(void)
+{
+    double volt, temp_log;
+    int16_t ntc_resistance, temp;
+    
+    volt = (ADC_REF / 1024) * ((double)adc_temp_heatsink);
+    ntc_resistance = (-(volt * R_DIV) / ADC_REF) / ((volt / ADC_REF) - 1);
+    temp_log = log(ntc_resistance/R_REF);
+    temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
+    
+    return temp;
 }
 
 void adc_get_data(void)
@@ -106,7 +134,7 @@ void adc_get_data(void)
             break;
         case ADC_CHANNEL_ICC:
             ++count;
-            if (count > 2 && count < 8)
+            if (count > 2 && count < 6)
                 sum += ADC;
             else if (count >= 6)
             {
@@ -118,9 +146,9 @@ void adc_get_data(void)
             break;
         default:
             ++count;
-            if (count > 2 && count < 8)
+            if (count > 2 && count < 6)
                 sum += ADC;
-            else if (count >= 8)
+            else if (count >= 6)
             {
                 adc_temp_int = sum / 3;
                 count        = 0;
@@ -142,10 +170,14 @@ result_t adc_check_swr(void)
 
 result_t adc_check_temp(void)
 {
-    if (adc_temp_heatsink > ADC_TEMP_HEATSINK_MAX)
+    if (adc_temp_heatsink < ADC_TEMP_HEATSINK_MAX)
         return ERROR;
+    else if (adc_temp_heatsink < ADC_TEMP_HEATSINK_ABS_MAX)
+        return BIG_ERROR;
     else if (adc_temp_int > ADC_TEMP_INT_MAX)
         return ERROR;
+    else if (adc_temp_int > ADC_TEMP_INT_ABS_MAX)
+        return BIG_ERROR;
 
     return SUCCESS;
 }
@@ -155,15 +187,18 @@ void adc_evaluation(void)
     if (adc_check_swr() == ERROR)
     {
         switching_state = SWITCHING_OFF;
+        timer_ovf_count = 0;
         ptt_set_irq(DISABLE);
-        pom = "HI SWR";
-        adc_error_timer(ENABLE);
         switching_off_sequence();
+        pom = "HI";
+        ui_state = UI_ERROR;
+        adc_error_timer(ENABLE);
     }
     if (adc_check_temp() == ERROR ||  switching_state == SWITCHING_ON)
         SWITCHING_FAN_ON;
     else
         SWITCHING_FAN_OFF;
+    //if (adc_check_temp() == BIG_ERROR)
 }
 
 ISR(ADC_vect)
@@ -177,12 +212,12 @@ ISR(ADC_vect)
 
 ISR(TIMER2_OVF_vect)
 {
-    static uint16_t timer_ovf_count = 0;
     if (++timer_ovf_count > 1225) // 20s 1225 3s 183
     {
         timer_ovf_count = 0;
-        pom = "SWR OK";
+        pom = "OK";
         adc_error_timer(DISABLE);
+        ui_state = UI_RUN;
         ptt_set_irq(ENABLE);
     }
 }
