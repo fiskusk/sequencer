@@ -7,7 +7,6 @@
 #include "types.h"
 #include "switching.h"
 
-
 typedef enum {
     UI_INIT,
     UI_RUN,

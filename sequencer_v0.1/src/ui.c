@@ -8,9 +8,9 @@
 volatile ui_state_t ui_state;
 volatile state_t print_func;
 
-uint16_t cela_cast  = 0;
-uint16_t desetinna = 0;
-float des_tvar     = 0;
+//uint16_t cela_cast  = 0;
+//uint16_t desetinna = 0;
+//float des_tvar     = 0;
 char buffer[20];
 
 void ui_init(void)
@@ -21,20 +21,14 @@ void ui_init(void)
     ui_state = UI_INIT;
 }
 
-ISR(TIMER0_OVF_vect)
+char* ui_decimal(float decimal)
 {
-    print_func = ENABLE;
-    static uint16_t adc_ovf_count = 0;
-    static state_t state_led = ENABLE;
-    if (++adc_ovf_count > 50)
-    {
-        adc_ovf_count = 0;
-        switching_status_led(state_led);
-        if (state_led == ENABLE)
-            state_led = DISABLE;
-        else
-            state_led = ENABLE;
-    }
+    uint8_t int_part = decimal, dec_part;
+    static char buffer[20];
+    
+    dec_part = (decimal - (float) int_part) * 10;
+    sprintf_P(buffer, PSTR("%2d.%1d"), int_part, dec_part);
+    return buffer;
 }
 
 void ui_handle(void)
@@ -69,12 +63,11 @@ void ui_handle(void)
             break;
         
         case UI_RUN:
-            cela_cast  = (((adc_power * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
-            sprintf_P(buffer, PSTR("OUT POWER %4d W"),cela_cast);
+            sprintf_P(buffer, PSTR("OUT POWER %4d W"), adc_get_pwr());
             lcd_gotoxy(0,1);
             lcd_puts(buffer);
-            cela_cast  = (((adc_swr * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
-            sprintf_P(buffer, PSTR("REF.POWER %4d W"),cela_cast);
+            
+            sprintf_P(buffer, PSTR("REF.POWER %4d W"),adc_get_ref());
             lcd_gotoxy(0,2);
             lcd_puts(buffer);
             break;
@@ -115,29 +108,13 @@ void ui_handle(void)
             ui_state = UI_RUN;
             break;
     }
-    des_tvar  = ( (adc_ucc * ADC_REF) / 1024.0) * 28.08988764; // * 28.08988764 or  27.92008197
-    cela_cast = des_tvar;
-    desetinna = (des_tvar - (float) cela_cast) * 10;
-    sprintf_P(buffer, PSTR("%2d"), cela_cast);
+       
     lcd_gotoxy(2,3);
-    lcd_puts(buffer);
-    sprintf_P(buffer, PSTR("%d"),desetinna);
-    lcd_gotoxy(5,3);
-    lcd_puts(buffer);
+    lcd_puts(ui_decimal(adc_get_ucc()));
     
-    des_tvar  = ((adc_icc * ADC_REF) / 1024.0) / (0.0025 * 20);
-    cela_cast = des_tvar;
-    desetinna = (des_tvar - (float) cela_cast) * 10;
-    sprintf_P(buffer, PSTR("%2d"),cela_cast);
     lcd_gotoxy(11,3);
-    lcd_puts(buffer);
-    sprintf_P(buffer, PSTR("%d"),desetinna);
-    lcd_gotoxy(14,3);
-    lcd_puts(buffer);
+    lcd_puts(ui_decimal(adc_get_icc()));
     
-    //cela_cast = (-68.504) * ((adc_temp_heatsink * ADC_REF) / 1024.0) + 139.33;
-    //des_tvar = ((adc_temp_heatsink * 2.502) / 1024.0);
-    //lcd_gotoxy(9,0);
     sprintf_P(buffer, PSTR("%2d%cC "), adc_get_temp(),0xDF);
     lcd_gotoxy(9,0);
     lcd_puts(buffer);
@@ -146,4 +123,20 @@ void ui_handle(void)
     lcd_puts(pom);
     
     print_func = DISABLE;
+}
+
+ISR(TIMER0_OVF_vect)
+{
+    print_func = ENABLE;
+    static uint16_t adc_ovf_count = 0;
+    static state_t state_led = ENABLE;
+    if (++adc_ovf_count > 50)
+    {
+        adc_ovf_count = 0;
+        switching_status_led(state_led);
+        if (state_led == ENABLE)
+        state_led = DISABLE;
+        else
+        state_led = ENABLE;
+    }
 }

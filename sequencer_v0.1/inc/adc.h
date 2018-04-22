@@ -39,10 +39,17 @@ extern volatile uint16_t timer_ovf_count;
 
 
 void adc_init(void);
+
 void adc_get_data(void);
+int16_t adc_get_temp(void);
+float adc_get_swr(void);
+uint16_t adc_get_pwr(void);
+uint16_t adc_get_ref(void);
+float adc_get_icc(void);
+float adc_get_ucc(void);
+
 result_t adc_check_swr(void);
 result_t adc_check_temp(void);
-uint8_t adc_get_temp(void);
 result_t adc_check_ucc(void);
 result_t adc_check_icc(void);
 

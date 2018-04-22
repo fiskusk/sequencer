@@ -123,7 +123,7 @@ void adc_get_data(void)
 } /* adc_get_data */
 
 
-uint8_t adc_get_temp(void)
+int16_t adc_get_temp(void)
 {
     float volt, temp_log;
     int16_t ntc_resistance, temp;
@@ -133,9 +133,52 @@ uint8_t adc_get_temp(void)
     temp_log = log(ntc_resistance/R_REF);
     temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
     
+    //temp = (-68.504) * ((adc_temp_heatsink * ADC_REF) / 1024.0) + 139.33;
+    //temp = ((adc_temp_heatsink * 2.502) / 1024.0);
+    
     return temp;
 }
 
+float adc_get_swr(void)
+{
+    float des_tvar;
+    des_tvar = 0;
+    
+    return des_tvar;
+    
+}
+
+uint16_t adc_get_pwr(void)
+{
+    uint16_t pwr;
+    pwr = (((adc_power * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
+    
+    return pwr;
+}
+
+uint16_t adc_get_ref(void)
+{
+    uint16_t swr;
+    swr  = (((adc_swr * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
+    
+    return swr;
+}
+
+float adc_get_icc(void)
+{
+    float icc;
+    icc = ((adc_icc * ADC_REF) / 1024.0) / (0.0025 * 20);
+    
+    return icc;
+}
+
+float adc_get_ucc(void)
+{
+    float ucc;
+    ucc = ( (adc_ucc * ADC_REF) / 1024.0) * 28.08988764; // * 28.08988764 or  27.92008197
+    
+    return ucc;
+}
 
 void adc_block_pa(adc_block_t adc_block)
 {
