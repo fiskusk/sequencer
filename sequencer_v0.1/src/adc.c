@@ -1,5 +1,4 @@
 #include "adc.h"
-#include "settings.h"
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
 adc_block_t adc_block;
@@ -31,7 +30,7 @@ void adc_init(void)
     // ADENable, ADStart Conversion, ADInterrupt Enable
     // when set ADATE - ADCH MSB, ADCL LSB
     // ADPrescaler Select - 2,2,4,8,16,32,64,128
-    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // | (1 << ADATE)
+    ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // | (1 << ADATE)
 
     PRR &= ~(1 << PRADC);
 
@@ -51,33 +50,6 @@ void adc_error_timer(state_t state)
     {
         TCCR2B &= ~((1 << CS22) | (1 << CS21) | (1 << CS20));
     }
-}
-
-uint8_t adc_get_temp(void)
-{
-    double volt, temp_log;
-    int16_t ntc_resistance, temp;
-    
-    volt = (ADC_REF / 1024) * ((double)adc_temp_heatsink);
-    ntc_resistance = (-(volt * R_DIV) / ADC_REF) / ((volt / ADC_REF) - 1);
-    temp_log = log(ntc_resistance/R_REF);
-    temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
-    
-    return temp;
-}
-
-void adc_block_pa(adc_block_t adc_block)
-{
-    switching_state = SWITCHING_OFF;
-    timer_ovf_count = 1220;
-    ptt_set_irq(DISABLE);
-    switching_off_sequence();
-    pom = "HI";
-    if (adc_block == BLOCK_TIMER)
-    {
-        timer_ovf_count = 0;  
-    }
-    adc_error_timer(ENABLE);  
 }
 
 void adc_get_data(void)
@@ -150,6 +122,35 @@ void adc_get_data(void)
     ADMUX = (ADMUX & 0xF0) | adc_active_channel;
 } /* adc_get_data */
 
+
+uint8_t adc_get_temp(void)
+{
+    float volt, temp_log;
+    int16_t ntc_resistance, temp;
+    
+    volt = (ADC_REF / 1024) * ((float)adc_temp_heatsink);
+    ntc_resistance = (-(volt * R_DIV) / ADC_REF) / ((volt / ADC_REF) - 1);
+    temp_log = log(ntc_resistance/R_REF);
+    temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
+    
+    return temp;
+}
+
+
+void adc_block_pa(adc_block_t adc_block)
+{
+    switching_state = SWITCHING_OFF;
+    timer_ovf_count = 1220;
+    ptt_set_irq(DISABLE);
+    switching_off_sequence();
+    pom = "HI";
+    if (adc_block == BLOCK_TIMER)
+    {
+        timer_ovf_count = 0;
+    }
+    adc_error_timer(ENABLE);
+}
+
 result_t adc_check_swr(void)
 {
     if (adc_swr > ADC_SWR_VOLTAGE_MAX)
@@ -188,52 +189,49 @@ result_t adc_check_icc(void)
 
 void adc_evaluation(void)
 {
-    if (adc_check_swr() == ERROR)
+    if (adc_check_swr() == SUCCESS)
+    ;
+    else
     {
         adc_swr_cache = adc_swr;
         ui_state = UI_HI_SWR;
         adc_block_pa(BLOCK_TIMER);
     }
-    if (adc_check_temp() == BIG_ERROR)
-    {
-        ui_state = UI_HI_TEMP;
-        adc_block_pa(BLOCK_TIMER);
-    }
-    if (adc_check_ucc() == ERROR)
+    
+    if (adc_check_ucc() == SUCCESS)
+    ;
+    else
     {
         ui_state = UI_VOLTAGE_BEYOND_LIM;
         adc_block_pa(BLOCK_ONLY);
     }
-    if (adc_check_icc() == ERROR)
+    if (adc_check_icc() == SUCCESS)
+    ;
+    else
     {
         ui_state = UI_CURRENT_OVERLOAD;
+        adc_block_pa(BLOCK_TIMER);
+    }
+    if (adc_check_temp() == SUCCESS || adc_check_temp() == ERROR)
+    ;
+    else
+    {
+        ui_state = UI_HI_TEMP;
         adc_block_pa(BLOCK_TIMER);
     }
     if (adc_check_temp() == ERROR || adc_check_temp() == BIG_ERROR || switching_state == SWITCHING_ON)
         SWITCHING_FAN_ON;
     else
         SWITCHING_FAN_OFF;
+        
 }
 
 ISR(ADC_vect)
 {
-    //static uint16_t adc_ovf_count = 0;
-    //static state_t state_led = ENABLE;
     cli();
     adc_get_data();
     if (ui_state != UI_INIT)
         adc_evaluation();
-        
-    //if (++adc_ovf_count > 1000)
-    //{
-        //adc_ovf_count = 0;
-        //switching_status_led(state_led);
-        //if (state_led == ENABLE)
-            //state_led = DISABLE;
-        //else
-            //state_led = ENABLE;
-    //}
-    
     sei();
     ADCSRA |= 1 << ADSC;
 }

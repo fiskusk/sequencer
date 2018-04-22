@@ -142,7 +142,9 @@ void switching_off_sequence(void)
 ISR(TIMER1_OVF_vect)
 {
     switching_timer(DISABLE);
-    if (button_ptt_is_pressed())
+    if (button_ptt_is_pressed() && adc_check_swr() == SUCCESS 
+        && adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
+        && adc_check_icc() == SUCCESS)
     {
         switching_state = SWITCHING_ON;
         pom = "TX";

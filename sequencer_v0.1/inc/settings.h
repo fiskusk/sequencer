@@ -7,12 +7,12 @@
 #endif
 
 // define NTC
-#define R_DIV   10000
-#define R_REF   19000
+#define R_DIV   10e03
+#define R_REF   22e03
 #define A1		3.354016e-03
-#define B1		2.569850e-04
-#define C1		2.620131e-06
-#define D1		6.383091e-08
+#define B1		2.744032e-04
+#define C1		3.666944e-06
+#define D1		1.375492e-07
 
 // define limits
 #define ADC_SWR_VOLTAGE_MAX         800

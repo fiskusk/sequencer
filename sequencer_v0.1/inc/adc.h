@@ -1,7 +1,6 @@
 #ifndef ADC_H_INCLUDED
 #define ADC_H_INCLUDED
 
-#include "settings.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <math.h>
@@ -10,6 +9,8 @@
 #include "uart.h"
 #include "ptt.h"
 #include "switching.h"
+#include "ui.h"
+#include "settings.h"
 
 #define ADC_REF 2.501
 
@@ -42,6 +43,8 @@ void adc_get_data(void);
 result_t adc_check_swr(void);
 result_t adc_check_temp(void);
 uint8_t adc_get_temp(void);
+result_t adc_check_ucc(void);
+result_t adc_check_icc(void);
 
 
 #endif // ADC_H_INCLUDED
