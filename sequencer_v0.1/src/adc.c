@@ -1,10 +1,12 @@
 #include "adc.h"
+#include <avr/pgmspace.h>
+#include "stdio.h"
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
 adc_block_t adc_block;
 
-volatile uint16_t adc_swr;
-volatile uint16_t adc_swr_cache;
+volatile uint16_t adc_ref;
+volatile uint16_t adc_ref_cache;
 volatile uint16_t adc_ucc;
 volatile uint16_t adc_icc;
 volatile uint16_t adc_power;
@@ -64,7 +66,7 @@ void adc_get_data(void)
                 sum += ADC;
             else if (count >= 6)
             {
-                adc_swr = sum / 3;
+                adc_ref = sum / 3;
                 count        = 0;
                 sum = 0;
                 adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
@@ -125,11 +127,11 @@ void adc_get_data(void)
 
 int16_t adc_get_temp(void)
 {
-    float volt, temp_log;
+    float volt, temp_log, adc_ref = ADC_REF/1000;
     int16_t ntc_resistance, temp;
-    
-    volt = (ADC_REF / 1024) * ((float)adc_temp_heatsink);
-    ntc_resistance = (-(volt * R_DIV) / ADC_REF) / ((volt / ADC_REF) - 1);
+        
+    volt = (adc_ref / 1024) * ((float)adc_temp_heatsink);
+    ntc_resistance = (-(volt * R_DIV) / adc_ref) / ((volt / adc_ref) - 1);
     temp_log = log(ntc_resistance/R_REF);
     temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
     
@@ -139,43 +141,71 @@ int16_t adc_get_temp(void)
     return temp;
 }
 
-float adc_get_swr(void)
+char* adc_get_swr(uint16_t pwr, uint16_t ref)
 {
-    float des_tvar;
-    des_tvar = 0;
+    float return_loss;
+    uint32_t swr;
     
-    return des_tvar;
+    uint16_t int_part;
+    uint16_t dec_part;
+    static char buffer[20];
+    
+    return_loss = sqrt((float) ref/pwr);
+    
+    swr = ((1 + return_loss) * 1000 ) / (1 - return_loss);
+    
+    if ( (swr - (swr/100) * 100) > 50)
+        swr += 10;
+    
+    int_part = swr/1000;
+    dec_part = (swr%1000)/10;
+    if (int_part == 0)
+        sprintf_P(buffer, PSTR(" -.-- "));
+    else if (pwr < ref)
+        sprintf_P(buffer, PSTR(" ERR "));
+    else if (int_part > 999)
+        sprintf_P(buffer, PSTR(" %4d "),int_part);
+    else if (int_part > 99)
+        sprintf_P(buffer, PSTR("%2d.%1d "),int_part, dec_part);
+    else
+        sprintf_P(buffer, PSTR("%2d.%02d "),int_part, dec_part);
+    
+    return buffer;
     
 }
 
 uint16_t adc_get_pwr(void)
 {
     uint16_t pwr;
-    pwr = (((adc_power * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
+    float volts = (float) adc_power * (ADC_REF/1000) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
+    //volts ;
+    pwr = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
     
     return pwr;
 }
 
 uint16_t adc_get_ref(void)
 {
-    uint16_t swr;
-    swr  = (((adc_swr * ADC_REF) / 1024.0) - 0.3607) / 0.0272;
-    
-    return swr;
+    uint16_t ref;
+    float volts = (float) adc_ref * (ADC_REF/1000) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
+    //volts ;
+    ref = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
+   
+   return ref;
 }
 
-float adc_get_icc(void)
+uint16_t adc_get_icc(void)
 {
-    float icc;
-    icc = ((adc_icc * ADC_REF) / 1024.0) / (0.0025 * 20);
+    uint16_t icc;
+    icc = (((uint32_t) adc_icc * ADC_REF) / 1024) * 20;
     
     return icc;
 }
 
-float adc_get_ucc(void)
+uint16_t adc_get_ucc(void)
 {
-    float ucc;
-    ucc = ( (adc_ucc * ADC_REF) / 1024.0) * 28.08988764; // * 28.08988764 or  27.92008197
+    uint16_t ucc;
+    ucc = ( ((uint32_t) adc_ucc * ADC_REF) / 1024) * (280899/10000); // * 28.08988764 or  27.92008197
     
     return ucc;
 }
@@ -194,9 +224,9 @@ void adc_block_pa(adc_block_t adc_block)
     adc_error_timer(ENABLE);
 }
 
-result_t adc_check_swr(void)
+result_t adc_check_ref(void)
 {
-    if (adc_swr > ADC_SWR_VOLTAGE_MAX)
+    if (adc_ref > ADC_REF_VOLTAGE_MAX)
         return ERROR;
 
     return SUCCESS;
@@ -232,11 +262,11 @@ result_t adc_check_icc(void)
 
 void adc_evaluation(void)
 {
-    if (adc_check_swr() == SUCCESS)
+    if (adc_check_ref() == SUCCESS)
     ;
     else
     {
-        adc_swr_cache = adc_swr;
+        adc_ref_cache = adc_ref;
         ui_state = UI_HI_SWR;
         adc_block_pa(BLOCK_TIMER);
     }

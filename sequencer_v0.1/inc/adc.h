@@ -12,7 +12,7 @@
 #include "ui.h"
 #include "settings.h"
 
-#define ADC_REF 2.501
+#define ADC_REF 2501
 
 typedef enum {
     ADC_CHANNEL_SWR           = 1,
@@ -28,8 +28,8 @@ typedef enum {
 } adc_block_t;
 
 
-extern volatile uint16_t adc_swr;
-extern volatile uint16_t adc_swr_cache;
+extern volatile uint16_t adc_ref;
+extern volatile uint16_t adc_ref_cache;
 extern volatile uint16_t adc_ucc;
 extern volatile uint16_t adc_icc;
 extern volatile uint16_t adc_power;
@@ -42,13 +42,13 @@ void adc_init(void);
 
 void adc_get_data(void);
 int16_t adc_get_temp(void);
-float adc_get_swr(void);
+char* adc_get_swr(uint16_t pwr, uint16_t ref);
 uint16_t adc_get_pwr(void);
 uint16_t adc_get_ref(void);
-float adc_get_icc(void);
-float adc_get_ucc(void);
+uint16_t adc_get_icc(void);
+uint16_t adc_get_ucc(void);
 
-result_t adc_check_swr(void);
+result_t adc_check_ref(void);
 result_t adc_check_temp(void);
 result_t adc_check_ucc(void);
 result_t adc_check_icc(void);

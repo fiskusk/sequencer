@@ -39,7 +39,7 @@ void switching_status_led(state_t state)
 void switching_relay1(state_t state)
 {
     //uart_puts("rele 1\n");
-    if (adc_check_swr() == SUCCESS)
+    if (adc_check_ref() == SUCCESS)
         (state == ENABLE) ? SWITCHING_RELAY1_ON : SWITCHING_RELAY1_OFF;
     else
         SWITCHING_RELAY1_OFF;
@@ -48,7 +48,7 @@ void switching_relay1(state_t state)
 void switching_relay2(state_t state)
 {
     //uart_puts("rele 2\n");
-    if (adc_check_swr() == SUCCESS)
+    if (adc_check_ref() == SUCCESS)
         (state == ENABLE) ? (SWITCHING_RELAY2_ON) : (SWITCHING_RELAY2_OFF);
     else
         SWITCHING_RELAY2_OFF;
@@ -57,7 +57,7 @@ void switching_relay2(state_t state)
 void switching_bias(state_t state)
 {
     //uart_puts("bias\n");
-    if (adc_check_swr() ==  SUCCESS)
+    if (adc_check_ref() ==  SUCCESS)
         (state == ENABLE) ? (SWITCHING_BIAS_ON) : (SWITCHING_BIAS_OFF);
     else
         SWITCHING_BIAS_OFF;
@@ -65,7 +65,7 @@ void switching_bias(state_t state)
 
 void switching_ucc(state_t state)
 {
-    if (adc_check_swr() == SUCCESS)
+    if (adc_check_ref() == SUCCESS)
         (state == ENABLE) ? (SWITCHING_UCC_ON) : (SWITCHING_UCC_OFF);
     else
         SWITCHING_UCC_OFF;
@@ -142,7 +142,7 @@ void switching_off_sequence(void)
 ISR(TIMER1_OVF_vect)
 {
     switching_timer(DISABLE);
-    if (button_ptt_is_pressed() && adc_check_swr() == SUCCESS 
+    if (button_ptt_is_pressed() && adc_check_ref() == SUCCESS 
         && adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
         && adc_check_icc() == SUCCESS)
     {
