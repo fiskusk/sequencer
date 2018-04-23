@@ -15,7 +15,7 @@
 #define D1		1.375492e-07
 
 // define limits
-#define ADC_REF_VOLTAGE_MAX         1000
+#define ADC_REF_VOLTAGE_MAX         1023
 
 #define ADC_UCC_MIN                 80              // 80 -> 5.4885 V
 #define ADC_UCC_MAX                 180            // 170 -> 11.663 V, 180 -> 12,31V

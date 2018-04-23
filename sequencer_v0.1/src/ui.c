@@ -21,22 +21,22 @@ void ui_init(void)
     ui_state = UI_INIT;
 }
 
-char* ui_decimal(uint16_t milinumber)
+char* ui_one_decimal(uint16_t milinumber)
 {
     uint8_t int_part;
     uint16_t dec_part;
     static char buffer[20];
     
-    if ( (milinumber - (milinumber/1000) * 1000) > 500)
-        milinumber += 100;
+    //if ( milinumber <= 99 && milinumber >= 50 )
+        //milinumber += 10;
+    if ( (milinumber - (milinumber/100) * 100) >= 50)
+        milinumber += 10;
     int_part = milinumber/1000;
     dec_part = (milinumber%1000)/100;
     
     sprintf_P(buffer, PSTR("%2d.%1d"), int_part, dec_part);
     return buffer;
 }
-
-
 
 void ui_handle(void)
 {
@@ -119,12 +119,11 @@ void ui_handle(void)
             ui_state = UI_RUN;
             break;
     }
-       
     lcd_gotoxy(2,3);
-    lcd_puts(ui_decimal(adc_get_ucc()));
+    lcd_puts(ui_one_decimal(adc_get_ucc() ) );
     
     lcd_gotoxy(11,3);
-    lcd_puts(ui_decimal(adc_get_icc()));
+    lcd_puts(ui_one_decimal(adc_get_icc() ) );
     //lcd_puts(ui_decimal(12345));
     
     sprintf_P(buffer, PSTR("%2d%cC "), adc_get_temp(),0xDF);

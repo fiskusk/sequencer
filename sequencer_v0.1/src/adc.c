@@ -154,11 +154,14 @@ char* adc_get_swr(uint16_t pwr, uint16_t ref)
     
     swr = ((1 + return_loss) * 1000 ) / (1 - return_loss);
     
-    if ( (swr - (swr/100) * 100) > 50)
+    if ( swr <= 99999 && (swr - (swr/10) * 10) >= 5)
+        swr += 10;
+    else if ( swr > 99999 && swr <= 999999 && (swr - (swr/100) * 100) >= 50)
         swr += 10;
     
     int_part = swr/1000;
-    dec_part = (swr%1000)/10;
+    dec_part = (swr%1000);
+    
     if (int_part == 0)
         sprintf_P(buffer, PSTR(" -.-- "));
     else if (pwr < ref)
@@ -166,9 +169,9 @@ char* adc_get_swr(uint16_t pwr, uint16_t ref)
     else if (int_part > 999)
         sprintf_P(buffer, PSTR(" %4d "),int_part);
     else if (int_part > 99)
-        sprintf_P(buffer, PSTR("%2d.%1d "),int_part, dec_part);
+        sprintf_P(buffer, PSTR("%3d.%1d "),int_part, dec_part/100);
     else
-        sprintf_P(buffer, PSTR("%2d.%02d "),int_part, dec_part);
+        sprintf_P(buffer, PSTR("%2d.%02d "),int_part, dec_part/10);
     
     return buffer;
     
