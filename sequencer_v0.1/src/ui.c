@@ -71,7 +71,7 @@ void ui_handle(void)
         
         case UI_RUN:
             pwr = adc_get_pwr();
-            sprintf_P(buffer, PSTR("OUT POWER %4d W"), pwr);
+            sprintf_P(buffer, PSTR("OUT POWER %4d W"), pwr); //pwr
             lcd_gotoxy(0,1);
             lcd_puts(buffer);
             ref = adc_get_ref();

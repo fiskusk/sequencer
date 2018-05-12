@@ -127,8 +127,8 @@ void adc_get_data(void)
 
 int16_t adc_get_temp(void)
 {
-    float volt, temp_log, adc_ref = ADC_REF/1000;
-    int16_t ntc_resistance, temp;
+    float volt, temp_log, adc_ref = ADC_REF/1000.0;
+    float ntc_resistance, temp;
         
     volt = (adc_ref / 1024) * ((float)adc_temp_heatsink);
     ntc_resistance = (-(volt * R_DIV) / adc_ref) / ((volt / adc_ref) - 1);
@@ -179,10 +179,10 @@ char* adc_get_swr(uint16_t pwr, uint16_t ref)
 
 uint16_t adc_get_pwr(void)
 {
-    uint16_t pwr;
-    float volts = (float) adc_power * (ADC_REF/1000) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
+    float pwr;
+    float volts = (float) adc_power * (ADC_REF) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
     //volts ;
-    pwr = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
+    pwr = APWR*volts*volts + BPWR*volts - CPWR;
     
     return pwr;
 }
@@ -200,7 +200,7 @@ uint16_t adc_get_ref(void)
 uint16_t adc_get_icc(void)
 {
     uint16_t icc;
-    icc = (((uint32_t) adc_icc * ADC_REF) / 1024) * 20;
+    icc = (((uint32_t) adc_icc * ADC_REF) / 1024) * 19.476 + 0.031;
     
     return icc;
 }
@@ -208,7 +208,7 @@ uint16_t adc_get_icc(void)
 uint16_t adc_get_ucc(void)
 {
     uint16_t ucc;
-    ucc = ( ((uint32_t) adc_ucc * ADC_REF) / 1024) * (280899/10000); // * 28.08988764 or  27.92008197
+    ucc = ( ((uint32_t) adc_ucc * ADC_REF) / 1024) * 28; // * 28.08988764 or  27.92008197
     
     return ucc;
 }

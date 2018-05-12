@@ -24,6 +24,9 @@ void switching_init(void)
 
     machine_state   = RELAY1_AND_FAN;
     switching_state = SWITCHING_OFF;
+    
+    
+    
 }
 
 void switching_timer(state_t state) // switch, which turn on (1) timer1, or turn off (0)
@@ -94,18 +97,18 @@ void switching_on_sequence(void)
             break;
         case RELAY2:
             TCNT1         = TSEQ;
-            machine_state = BIAS;
+            machine_state = UCC;
             switching_relay2(ENABLE);
             switching_timer(ENABLE);
             break;
-        case BIAS:
+        case UCC:
             TCNT1         = TSEQ;
-            machine_state = UCC;
-            switching_bias(ENABLE);
+            machine_state = BIAS;
+            switching_ucc(ENABLE);
             switching_timer(ENABLE);
             break;
-        case UCC:
-            switching_ucc(ENABLE);
+        case BIAS:
+            switching_bias(ENABLE);
             break;
     }
 }
@@ -114,16 +117,16 @@ void switching_off_sequence(void)
 {
     switch (machine_state)
     {
-        case UCC:
-            TCNT1         = TSEQ;
-            machine_state = BIAS;
-            switching_ucc(DISABLE);
-            switching_timer(ENABLE);
-            break;
         case BIAS:
             TCNT1         = TSEQ;
-            machine_state = RELAY2;
+            machine_state = UCC;
             switching_bias(DISABLE);
+            switching_timer(ENABLE);
+            break;
+        case UCC:
+            TCNT1         = TSEQ;
+            machine_state = RELAY2;
+            switching_ucc(DISABLE);
             switching_timer(ENABLE);
             break;
         case RELAY2:

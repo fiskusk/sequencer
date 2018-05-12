@@ -35,7 +35,8 @@ void setup(void)
     uart_init();           // initialization UART
    
     sei(); // enable all interrupts
-     
+    
+    switching_bias(DISABLE);
 }
 
 int main(void)

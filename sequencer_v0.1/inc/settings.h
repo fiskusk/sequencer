@@ -17,13 +17,13 @@
 // define limits
 #define ADC_REF_VOLTAGE_MAX         1023
 
-#define ADC_UCC_MIN                 80              // 80 -> 5.4885 V
-#define ADC_UCC_MAX                 180            // 170 -> 11.663 V, 180 -> 12,31V
+#define ADC_UCC_MIN                 600              // 80 -> 5.4885 V
+#define ADC_UCC_MAX                 744            // 170 -> 11.663 V, 180 -> 12,31V
 
 #define ADC_ICC_MAX                 819
 
-#define ADC_TEMP_HEATSINK_MAX       670             // Turn fan
-#define ADC_TEMP_HEATSINK_ABS_MAX   600             // Overheat, turn all, block, turn fan
+#define ADC_TEMP_HEATSINK_MAX       630             // Turn fan
+#define ADC_TEMP_HEATSINK_ABS_MAX   300             // Overheat, turn all, block, turn fan
 
 #define ADC_TEMP_INT_MAX            1023
 #define ADC_TEMP_INT_ABS_MAX        1023

@@ -12,7 +12,11 @@
 #include "ui.h"
 #include "settings.h"
 
-#define ADC_REF 2501
+#define ADC_REF 2506
+
+#define APWR 1.123453822e-5
+#define BPWR 1.060541075e-2
+#define CPWR 0.5780925282
 
 typedef enum {
     ADC_CHANNEL_SWR           = 1,
