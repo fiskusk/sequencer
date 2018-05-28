@@ -2,7 +2,7 @@
 #include <avr/pgmspace.h>
 #include "stdio.h"
 
-adc_channel_t adc_active_channel = ADC_CHANNEL_SWR; // default first channel in ADC process
+adc_channel_t adc_active_channel = ADC_CHANNEL_REF; // default first channel in ADC process
 adc_block_t adc_block;
 
 volatile uint16_t adc_ref;
@@ -10,12 +10,14 @@ volatile uint16_t adc_ref_cache;
 volatile uint16_t adc_ucc;
 volatile uint16_t adc_icc;
 volatile uint16_t adc_power;
-volatile uint16_t adc_temp_int;
 volatile uint16_t adc_temp_heatsink;
 volatile uint16_t timer_ovf_count = 0; 
 
 extern volatile ui_state_t ui_state;
 
+/************************************************************************/
+/*  initialization function for ADC                                     */
+/************************************************************************/
 void adc_init(void)
 {
     // setup ADC
@@ -34,45 +36,57 @@ void adc_init(void)
     // ADPrescaler Select - 2,2,4,8,16,32,64,128
     ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // | (1 << ADATE)
 
-    PRR &= ~(1 << PRADC);
+    PRR &= ~(1 << PRADC);           // power reduction register ADC, deactivate-> turn on ADC
 
-    TIMSK2 |= 1 << TOIE2;
+    TIMSK2 |= 1 << TOIE2;           // EN interrupt from TC2 when overflow
 
-    DDRC  &= 0b11100000; // ADC0-4 as output
-    PORTC &= 0b11100000; // ADC0-4 pull-up turn off
-}
+    DDRC  &= 0b11100000;            // ADC0-4 as input
+    PORTC &= 0b11100000;            // ADC0-4 pull-up turn off
+} /* adc_init */
 
+/************************************************************************/
+/*  These function turn on or turn of ADC TC2                           */
+/*  description of interrupt behavior at ISR routine                    */
+/************************************************************************/
 void adc_error_timer(state_t state)
 {
     if (state == ENABLE)
     {
-        TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);
+        // div f/1024, set ON TC2
+        TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);      
     }
     else
     {
         TCCR2B &= ~((1 << CS22) | (1 << CS21) | (1 << CS20));
     }
-}
+} /* adc_error_timer */
 
+/************************************************************************/
+/*  These function switches inc. the measuring inputs of the ADC        */
+/*  first two sample are throw away                                     */   
+/*  next each value are sampled three times and averaged                */                                                    
+/************************************************************************/
 void adc_get_data(void)
 {
-    static uint8_t count = 0;
-    static volatile uint16_t sum  = 0;
+    static uint8_t count = 0;               // predefine count to zero
+    static volatile uint16_t sum  = 0;      // summary varriable predefine to zero
+    
+    //switch-case structure for relevant states
     switch (adc_active_channel)
     {
-        case ADC_CHANNEL_SWR:
+        case ADC_CHANNEL_REF:               // channel for measuring reflected power
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
             else if (count >= 6)
             {
                 adc_ref = sum / 3;
-                count        = 0;
-                sum = 0;
-                adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+                count        = 0;           // reset count of repetions
+                sum = 0;                    // reset summary variable
+                adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK; //next state
             }
             break;
-        case ADC_CHANNEL_TEMP_HEATSINK:
+        case ADC_CHANNEL_TEMP_HEATSINK:     // channel for measuring temperature
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
@@ -84,7 +98,7 @@ void adc_get_data(void)
                 adc_active_channel = ADC_CHANNEL_POWER;
             }
             break;
-        case ADC_CHANNEL_POWER:
+        case ADC_CHANNEL_POWER:             // channel for measuring radiated power
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
@@ -96,7 +110,7 @@ void adc_get_data(void)
                 adc_active_channel = ADC_CHANNEL_UCC;
             }
             break;
-        case ADC_CHANNEL_UCC:
+        case ADC_CHANNEL_UCC:               // channel for measuring voltage
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
@@ -108,7 +122,7 @@ void adc_get_data(void)
                 adc_active_channel = ADC_CHANNEL_ICC;
             }
             break;
-        default:
+        default:                            // channel for measurring current
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
@@ -117,30 +131,44 @@ void adc_get_data(void)
                 adc_icc = sum / 3;
                 count   = 0;
                 sum     = 0;
-                adc_active_channel = ADC_CHANNEL_SWR;
+                adc_active_channel = ADC_CHANNEL_REF;
             }
             break;
     }
-    ADMUX = (ADMUX & 0xF0) | adc_active_channel;
+    ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel 
 } /* adc_get_data */
 
-
+/************************************************************************/
+/*  Function to tranfer measured voltage on temperature input           */
+/*  to degree Celsius                                                   */                    
+/************************************************************************/
 int16_t adc_get_temp(void)
 {
     float volt, temp_log, adc_ref = ADC_REF/1000.0;
     float ntc_resistance, temp;
-        
+    
+    // transfer ADC register value to volts    
     volt = (adc_ref / 1024) * ((float)adc_temp_heatsink);
+    
+    // transfer measure voltage to resistance of NTC termistor
+    // R_DIV is resistor in divider with termistor
     ntc_resistance = (-(volt * R_DIV) / adc_ref) / ((volt / adc_ref) - 1);
+    
+    // natural logarithm
     temp_log = log(ntc_resistance/R_REF);
+    
+    // transfer to resulting final temperature in degree of Celsius
     temp = 1.0 / ( A1 + B1*temp_log + C1*temp_log*temp_log + D1*temp_log*temp_log*temp_log) - 273.15;
     
     //temp = (-68.504) * ((adc_temp_heatsink * ADC_REF) / 1024.0) + 139.33;
     //temp = ((adc_temp_heatsink * 2.502) / 1024.0);
     
     return temp;
-}
+} /* adc_get_temp */
 
+/************************************************************************/
+/* This function calculate vswr from calc radiated power and ref. power */
+/************************************************************************/
 char* adc_get_swr(uint16_t pwr, uint16_t ref)
 {
     float return_loss;
@@ -150,18 +178,23 @@ char* adc_get_swr(uint16_t pwr, uint16_t ref)
     uint16_t dec_part;
     static char buffer[20];
     
+    // calculation of return loss
     return_loss = sqrt((float) ref/pwr);
     
+    // transfer to vswr value
     swr = ((1 + return_loss) * 1000 ) / (1 - return_loss);
     
+    // rounding
     if ( swr <= 99999 && (swr - (swr/10) * 10) >= 5)
         swr += 10;
     else if ( swr > 99999 && swr <= 999999 && (swr - (swr/100) * 100) >= 50)
         swr += 10;
-    
+   
+    // get integer and decimal part
     int_part = swr/1000;
     dec_part = (swr%1000);
     
+    // correct form message to print of LCD
     if (int_part == 0)
         sprintf_P(buffer, PSTR(" -.-- "));
     else if (pwr < ref)
@@ -175,66 +208,111 @@ char* adc_get_swr(uint16_t pwr, uint16_t ref)
     
     return buffer;
     
-}
+} /* adc_get_swr */
 
+/************************************************************************/
+/* Function to get power in watts from ADC value                        */
+/************************************************************************/
 uint16_t adc_get_pwr(void)
 {
     float pwr;
     float volts = (float) adc_power * (ADC_REF) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
     //volts ;
+    
+    // transfer measured voltage to power in watts using polynomial function
     pwr = APWR*volts*volts + BPWR*volts - CPWR;
     
     return pwr;
-}
+} /* adc_get_pwr */
 
+/************************************************************************/
+/* Function to get reflected power in watts from ADC value              */
+/************************************************************************/
 uint16_t adc_get_ref(void)
 {
-    uint16_t ref;
-    float volts = (float) adc_ref * (ADC_REF/1000) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
-    //volts ;
-    ref = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
+    float ref;
+    // transfer measrured adc_reflected power to reflection in watts
+    if (adc_ref > 0)
+        ref =  4.537319514e-05*adc_ref*adc_ref + 2.981010572e-02*adc_ref + 1.70300274;
+    else
+        ref = 0;
+    //ref = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
    
    return ref;
-}
+}/* adc_get_ref */
 
+/************************************************************************/
+/*  Get current in Ampers from ADC value                                */
+/************************************************************************/
 uint16_t adc_get_icc(void)
 {
     uint16_t icc;
+    
+    // linear regresion function
     icc = (((uint32_t) adc_icc * ADC_REF) / 1024) * 19.476 + 0.031;
     
     return icc;
-}
+}/* adc_get_icc */
 
+/************************************************************************/
+/*  Get voltage in Volts from ADC value                                 */
+/************************************************************************/
 uint16_t adc_get_ucc(void)
 {
     uint16_t ucc;
+    
+    // linear regresion function
     ucc = ( ((uint32_t) adc_ucc * ADC_REF) / 1024) * 28; // * 28.08988764 or  27.92008197
     
     return ucc;
-}
+} /* adc_get_ucc */
 
+
+/************************************************************************/
+/*  This block function can do tho types of block PA                    */
+/*  when input argument is BLOCK_TIMER, set block for certain time      */
+/*  when input argument is BLOCK_ONLY, set block without timer          */
+/************************************************************************/
 void adc_block_pa(adc_block_t adc_block)
 {
     switching_state = SWITCHING_OFF;
-    timer_ovf_count = 1220;
-    ptt_set_irq(DISABLE);
-    switching_off_sequence();
-    pom = "HI";
+    
+    /*  preset delay, commands in interrupt routine will be executed when
+    *   the value timer_ovf_count reached 1225. Therefore following function
+    *   do routine immediately
+    */
+    timer_ovf_count = 1224;             
+    ptt_set_irq(DISABLE);           // disable interrupt from PTT
+    switching_off_sequence();       // turn off all
+    pom = "HI";                     // status window message set to HI means hight
     if (adc_block == BLOCK_TIMER)
     {
-        timer_ovf_count = 0;
+        timer_ovf_count = 0;        // timer routine do after 1225*16.4ms = 20 sec
     }
-    adc_error_timer(ENABLE);
-}
+    adc_error_timer(ENABLE);        // enable timer2
+} /* adc_block_pa */
 
+/************************************************************************/
+/*  This function evaluates if reflected power exceed limit             */
+/************************************************************************/
 result_t adc_check_ref(void)
 {
     if (adc_ref > ADC_REF_VOLTAGE_MAX)
         return ERROR;
 
     return SUCCESS;
-}
+}/* adc_check_ref */
 
+/*
+   
+*/
+/************************************************************************/
+/*  This function evaluates if heatsink temperature exeed limits        */
+/*  Evaluates three states:                                             */
+/*  ERROR is set, if temperature exceed limit for turn on FAN           */
+/*  BIG_ERROR is set, when temp on heatsing exceed absulute maximum temp*/
+/*  SUCCESS is set, when temperature is in limits                       */
+/************************************************************************/
 result_t adc_check_temp(void)
 {
     if (adc_temp_heatsink < ADC_TEMP_HEATSINK_MAX && adc_temp_heatsink > ADC_TEMP_HEATSINK_ABS_MAX)
@@ -243,8 +321,11 @@ result_t adc_check_temp(void)
         return BIG_ERROR;
     
     return SUCCESS;
-}
+}/* adc_check_temp */
 
+/************************************************************************/
+/*  Function for evaluates input power supply voltage                   */
+/************************************************************************/
 result_t adc_check_ucc(void)
 {
     if (adc_ucc < ADC_UCC_MIN)
@@ -255,6 +336,9 @@ result_t adc_check_ucc(void)
     return SUCCESS;
 }
 
+/************************************************************************/
+/*  Function for evaluates output power supply current                  */
+/************************************************************************/
 result_t adc_check_icc(void)
 {
     if (adc_icc > ADC_ICC_MAX)
@@ -263,23 +347,26 @@ result_t adc_check_icc(void)
     return SUCCESS;
 }
 
+/************************************************************************/
+/*  Evaluation func, depending on detected err, decides action to do    */
+/************************************************************************/
 void adc_evaluation(void)
 {
     if (adc_check_ref() == SUCCESS)
     ;
     else
     {
-        adc_ref_cache = adc_ref;
-        ui_state = UI_HI_SWR;
-        adc_block_pa(BLOCK_TIMER);
+        adc_ref_cache = adc_ref;            // auxiliary variable for save high value
+        ui_state = UI_HI_REF;               // ui state for print on screen
+        adc_block_pa(BLOCK_TIMER);          // block and delay 20s
     }
     
     if (adc_check_ucc() == SUCCESS)
     ;
     else
     {
-        ui_state = UI_VOLTAGE_BEYOND_LIM;
-        adc_block_pa(BLOCK_ONLY);
+        ui_state = UI_VOLTAGE_BEYOND_LIM;   
+        adc_block_pa(BLOCK_ONLY);          
     }
     if (adc_check_icc() == SUCCESS)
     ;
@@ -300,26 +387,32 @@ void adc_evaluation(void)
     else
         SWITCHING_FAN_OFF;
         
-}
+}/* adc_evaluation */
 
+/************************************************************************/
+/*  ADC routine, when the transfer is complete                          */
+/************************************************************************/
 ISR(ADC_vect)
 {
-    cli();
-    adc_get_data();
-    if (ui_state != UI_INIT)
-        adc_evaluation();
-    sei();
-    ADCSRA |= 1 << ADSC;
+    cli();                      // disable all interruptions
+    adc_get_data();             // func for get data
+    if (ui_state != UI_INIT)    // run only if initialization was initiated
+        adc_evaluation();       // run evaluation func
+    sei();                      // enable all interruptions
+    ADCSRA |= 1 << ADSC;        // run ad conversion!
 }
 
+/************************************************************************/
+/*  Routine of TC2, when timer EN, routine execute each aprox 16,4 ms   */
+/************************************************************************/
 ISR(TIMER2_OVF_vect)
 {
     if (++timer_ovf_count > 1225) // 20s 1225 3s 183
     {
-        timer_ovf_count = 0;
-        pom = "OK";
-        adc_error_timer(DISABLE);
-        ui_state = UI_RUN;
-        ptt_set_irq(ENABLE);
+        timer_ovf_count = 0;        // reset overflow counter
+        pom = "OK";                 // set status for screen its OK
+        adc_error_timer(DISABLE);   // this timer disable
+        ui_state = UI_RUN;          // ALL OK, print on screen normal screen
+        ptt_set_irq(ENABLE);        // enable PTT interruption, enable TX
     }
 }

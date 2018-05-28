@@ -6,47 +6,49 @@
 #include <math.h>
 
 #include "types.h"
-#include "uart.h"
 #include "ptt.h"
 #include "switching.h"
 #include "ui.h"
 #include "settings.h"
 
-#define ADC_REF 2506
+#define ADC_REF 2506                    // reference voltage in millivolts
 
-#define APWR 1.123453822e-5
+// coeff. for power polynomial function
+#define APWR 1.123453822e-5             
 #define BPWR 1.060541075e-2
 #define CPWR 0.5780925282
 
+// structure for ADC channels
 typedef enum {
-    ADC_CHANNEL_SWR           = 1,
+    ADC_CHANNEL_REF           = 1,
     ADC_CHANNEL_TEMP_HEATSINK = 0,
     ADC_CHANNEL_POWER         = 2,
     ADC_CHANNEL_UCC           = 7,
     ADC_CHANNEL_ICC           = 6,
 } adc_channel_t;
 
+// structure for blocking states
 typedef enum {
     BLOCK_ONLY,
     BLOCK_TIMER,
 } adc_block_t;
 
+// ADC saved values
+extern volatile uint16_t adc_ref;           // reflected power
+extern volatile uint16_t adc_ref_cache;     // cache reflected power
+extern volatile uint16_t adc_ucc;           // voltage
+extern volatile uint16_t adc_icc;           // current
+extern volatile uint16_t adc_power;         // rediated power
+extern volatile uint16_t adc_temp_heatsink; // temperature on heatsink
+extern volatile uint16_t timer_ovf_count;   // repetion counter of interrupts
 
-extern volatile uint16_t adc_ref;
-extern volatile uint16_t adc_ref_cache;
-extern volatile uint16_t adc_ucc;
-extern volatile uint16_t adc_icc;
-extern volatile uint16_t adc_power;
-extern volatile uint16_t adc_temp_int;
-extern volatile uint16_t adc_temp_heatsink;
-extern volatile uint16_t timer_ovf_count; 
 
-
+//functions
 void adc_init(void);
-
 void adc_get_data(void);
 int16_t adc_get_temp(void);
 char* adc_get_swr(uint16_t pwr, uint16_t ref);
+
 uint16_t adc_get_pwr(void);
 uint16_t adc_get_ref(void);
 uint16_t adc_get_icc(void);

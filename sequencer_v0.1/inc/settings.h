@@ -7,30 +7,27 @@
 #endif
 
 // define NTC
-#define R_DIV   10e03
-#define R_REF   22e03
-#define A1		3.354016e-03
+#define R_DIV   10e03           // dividers upper resistance
+#define R_REF   22e03           // NTC reference resistance
+#define A1		3.354016e-03    // datasheet coefficients
 #define B1		2.744032e-04
 #define C1		3.666944e-06
 #define D1		1.375492e-07
 
-// define limits
-#define ADC_REF_VOLTAGE_MAX         1023
+// define ADC limits
+#define ADC_REF_VOLTAGE_MAX         50      // maximum reflected power
 
-#define ADC_UCC_MIN                 600              // 80 -> 5.4885 V
-#define ADC_UCC_MAX                 744            // 170 -> 11.663 V, 180 -> 12,31V
+#define ADC_UCC_MIN                 600     // minumum supply voltage
+#define ADC_UCC_MAX                 744     // maximum supply voltage
 
-#define ADC_ICC_MAX                 819
+#define ADC_ICC_MAX                 819     // maximum current
 
-#define ADC_TEMP_HEATSINK_MAX       630             // Turn fan
-#define ADC_TEMP_HEATSINK_ABS_MAX   300             // Overheat, turn all, block, turn fan
-
-#define ADC_TEMP_INT_MAX            1023
-#define ADC_TEMP_INT_ABS_MAX        1023
+#define ADC_TEMP_HEATSINK_MAX       630     // where turn fan
+#define ADC_TEMP_HEATSINK_ABS_MAX   300     // Overheat, turn off all, block and turn fan
 
 // define timers
 #define TSEQ 62411  // Time delay between of two sequence
-#define TREL 65535 // Delay between servo1 and servo2. They must switch simultaneously.
+#define TREL 65535  // Delay between servo1 and servo2. They must switch simultaneously.
 
 extern char *pom;
 
