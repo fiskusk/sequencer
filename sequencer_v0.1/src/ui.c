@@ -90,7 +90,7 @@ void ui_handle(void)
             sprintf_P(buffer, PSTR("OUT POWER %4d W"), pwr); 
             lcd_gotoxy(0,1);
             lcd_puts(buffer);               // print power
-            ref = adc_get_ref();
+            ref = adc_get_reflected();
             sprintf_P(buffer, PSTR("REF.POWER %4d W"), ref);
             lcd_gotoxy(0,2);
             lcd_puts(buffer);               // print reflected power

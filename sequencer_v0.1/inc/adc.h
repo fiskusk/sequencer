@@ -20,7 +20,7 @@
 
 // structure for ADC channels
 typedef enum {
-    ADC_CHANNEL_REF           = 1,
+    ADC_CHANNEL_REFLECTED           = 1,
     ADC_CHANNEL_TEMP_HEATSINK = 0,
     ADC_CHANNEL_POWER         = 2,
     ADC_CHANNEL_UCC           = 7,
@@ -34,7 +34,7 @@ typedef enum {
 } adc_block_t;
 
 // ADC saved values
-extern volatile uint16_t adc_ref;           // reflected power
+extern volatile uint16_t adc_reflected;           // reflected power
 extern volatile uint16_t adc_ref_cache;     // cache reflected power
 extern volatile uint16_t adc_ucc;           // voltage
 extern volatile uint16_t adc_icc;           // current
@@ -50,7 +50,7 @@ int16_t adc_get_temp(void);
 char* adc_get_swr(uint16_t pwr, uint16_t ref);
 
 uint16_t adc_get_pwr(void);
-uint16_t adc_get_ref(void);
+uint16_t adc_get_reflected(void);
 uint16_t adc_get_icc(void);
 uint16_t adc_get_ucc(void);
 

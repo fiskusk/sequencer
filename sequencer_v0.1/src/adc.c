@@ -2,10 +2,10 @@
 #include <avr/pgmspace.h>
 #include "stdio.h"
 
-adc_channel_t adc_active_channel = ADC_CHANNEL_REF; // default first channel in ADC process
+adc_channel_t adc_active_channel = ADC_CHANNEL_REFLECTED; // default first channel in ADC process
 adc_block_t adc_block;
 
-volatile uint16_t adc_ref;
+volatile uint16_t adc_reflected;
 volatile uint16_t adc_ref_cache;
 volatile uint16_t adc_ucc;
 volatile uint16_t adc_icc;
@@ -74,13 +74,13 @@ void adc_get_data(void)
     //switch-case structure for relevant states
     switch (adc_active_channel)
     {
-        case ADC_CHANNEL_REF:               // channel for measuring reflected power
+        case ADC_CHANNEL_REFLECTED:               // channel for measuring reflected power
             ++count;
             if (count > 2 && count < 6)
                 sum += ADC;
             else if (count >= 6)
             {
-                adc_ref = sum / 3;
+                adc_reflected = sum / 3;
                 count        = 0;           // reset count of repetions
                 sum = 0;                    // reset summary variable
                 adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK; //next state
@@ -131,7 +131,7 @@ void adc_get_data(void)
                 adc_icc = sum / 3;
                 count   = 0;
                 sum     = 0;
-                adc_active_channel = ADC_CHANNEL_REF;
+                adc_active_channel = ADC_CHANNEL_REFLECTED;
             }
             break;
     }
@@ -228,17 +228,17 @@ uint16_t adc_get_pwr(void)
 /************************************************************************/
 /* Function to get reflected power in watts from ADC value              */
 /************************************************************************/
-uint16_t adc_get_ref(void)
+uint16_t adc_get_reflected(void)
 {
-    float ref;
+    float reflected;
     // transfer measrured adc_reflected power to reflection in watts
-    if (adc_ref > 0)
-        ref =  4.537319514e-05*adc_ref*adc_ref + 2.981010572e-02*adc_ref + 1.70300274;
+    if (adc_reflected > 0)
+        reflected =  4.537319514e-05*adc_reflected*adc_reflected + 2.981010572e-02*adc_reflected + 1.70300274;
     else
-        ref = 0;
+        reflected = 0;
     //ref = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
    
-   return ref;
+   return reflected;
 }/* adc_get_ref */
 
 /************************************************************************/
@@ -297,7 +297,7 @@ void adc_block_pa(adc_block_t adc_block)
 /************************************************************************/
 result_t adc_check_ref(void)
 {
-    if (adc_ref > ADC_REF_VOLTAGE_MAX)
+    if (adc_reflected > ADC_REF_VOLTAGE_MAX)
         return ERROR;
 
     return SUCCESS;
@@ -352,32 +352,24 @@ result_t adc_check_icc(void)
 /************************************************************************/
 void adc_evaluation(void)
 {
-    if (adc_check_ref() == SUCCESS)
-    ;
-    else
+    if (adc_check_ref() != SUCCESS)
     {
-        adc_ref_cache = adc_ref;            // auxiliary variable for save high value
+        adc_ref_cache = adc_reflected;            // auxiliary variable for save high value
         ui_state = UI_HI_REF;               // ui state for print on screen
         adc_block_pa(BLOCK_TIMER);          // block and delay 20s
     }
     
-    if (adc_check_ucc() == SUCCESS)
-    ;
-    else
+    if (adc_check_ucc() != SUCCESS)
     {
         ui_state = UI_VOLTAGE_BEYOND_LIM;   
         adc_block_pa(BLOCK_ONLY);          
     }
-    if (adc_check_icc() == SUCCESS)
-    ;
-    else
+    if (adc_check_icc() != SUCCESS)
     {
         ui_state = UI_CURRENT_OVERLOAD;
         adc_block_pa(BLOCK_TIMER);
     }
-    if (adc_check_temp() == SUCCESS || adc_check_temp() == ERROR)
-    ;
-    else
+    if (adc_check_temp() != SUCCESS || adc_check_temp() != ERROR)
     {
         ui_state = UI_HI_TEMP;
         adc_block_pa(BLOCK_TIMER);
@@ -398,8 +390,8 @@ ISR(ADC_vect)
     adc_get_data();             // func for get data
     if (ui_state != UI_INIT)    // run only if initialization was initiated
         adc_evaluation();       // run evaluation func
-    sei();                      // enable all interruptions
     ADCSRA |= 1 << ADSC;        // run ad conversion!
+    sei();                      // enable all interruptions
 }
 
 /************************************************************************/
