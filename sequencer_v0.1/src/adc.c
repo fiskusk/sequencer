@@ -216,11 +216,18 @@ char* adc_get_swr(uint16_t pwr, uint16_t ref)
 uint16_t adc_get_pwr(void)
 {
     float pwr;
-    float volts = (float) adc_power * (ADC_REF) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
+    //float volts = (float) adc_power * (ADC_REF) / 1024.0; //(double) adc_power * ADC_REF / 1024UL;
     //volts ;
     
     // transfer measured voltage to power in watts using polynomial function
-    pwr = APWR*volts*volts + BPWR*volts - CPWR;
+    //pwr = APWR*volts*volts + BPWR*volts - CPWR;
+    
+    if(adc_power < 5)
+        pwr = 0;
+    else
+        pwr = 9.3725e-4*adc_power*adc_power + 3.865e-1*adc_power + 37.22;
+    
+    //pwr = adc_power;
     
     return pwr;
 } /* adc_get_pwr */
@@ -369,7 +376,7 @@ void adc_evaluation(void)
         ui_state = UI_CURRENT_OVERLOAD;
         adc_block_pa(BLOCK_TIMER);
     }
-    if (adc_check_temp() != SUCCESS || adc_check_temp() != ERROR)
+    if (adc_check_temp() == BIG_ERROR)
     {
         ui_state = UI_HI_TEMP;
         adc_block_pa(BLOCK_TIMER);
