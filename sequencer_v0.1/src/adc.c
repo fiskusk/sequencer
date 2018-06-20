@@ -14,6 +14,7 @@ volatile uint16_t adc_temp_heatsink;
 volatile uint16_t timer_ovf_count = 0; 
 
 extern volatile ui_state_t ui_state;
+volatile state_t evaluation = DISABLE;
 
 /************************************************************************/
 /*  initialization function for ADC                                     */
@@ -71,10 +72,34 @@ void toggle_led_port(void)
     switching_status_led(state_led);// EN/DIS status LED
     // negate state of LED
     if (state_led == ENABLE)
-    state_led = DISABLE;
+        state_led = DISABLE;
     else
-    state_led = ENABLE;
+        state_led = ENABLE;
 }
+
+/************************************************************************/
+/*  This block function can do tho types of block PA                    */
+/*  when input argument is BLOCK_TIMER, set block for certain time      */
+/*  when input argument is BLOCK_ONLY, set block without timer          */
+/************************************************************************/
+void adc_block_pa(adc_block_t adc_block)
+{
+    switching_state = SWITCHING_OFF;
+    
+    /*  preset delay, commands in interrupt routine will be executed when
+    *   the value timer_ovf_count reached 1225. Therefore following function
+    *   do routine immediately
+    */
+    timer_ovf_count = 1224;             
+    ptt_set_irq(DISABLE);           // disable interrupt from PTT
+    switching_off_sequence();       // turn off all
+    pom = "HI";                     // status window message set to HI means hight
+    if (adc_block == BLOCK_TIMER)
+    {
+        timer_ovf_count = 0;        // timer routine do after 1225*16.4ms = 20 sec
+    }
+    adc_error_timer(ENABLE);        // enable timer2
+} /* adc_block_pa */
 
 /************************************************************************/
 /*  These function switches inc. the measuring inputs of the ADC        */
@@ -90,10 +115,17 @@ void adc_get_data(void)
     switch (adc_active_channel) 
     {
         case ADC_CHANNEL_REFLECTED:               // channel for measuring reflected power
-            toggle_led_port();
             adc_reflected =  ADC;
+            //toggle_led_port();
+            switching_status_led(ENABLE);
             count++;
-            if (count == 1)
+            if (adc_check_ref() != SUCCESS && ui_state != UI_INIT)
+            {
+                adc_ref_cache = adc_reflected;            // auxiliary variable for save high value
+                ui_state = UI_HI_REF;               // ui state for print on screen
+                adc_block_pa(BLOCK_TIMER);          // block and delay 20s
+            }
+            else if (count == 1)
                  adc_active_channel = ADC_CHANNEL_POWER; //next state
             else if (count == 2)
                 adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
@@ -104,6 +136,7 @@ void adc_get_data(void)
                 count = 0;
                 adc_active_channel = ADC_CHANNEL_ICC;
             }
+            switching_status_led(DISABLE);
             break;
         case ADC_CHANNEL_POWER:             // channel for measuring radiated power
             adc_power = ADC;
@@ -111,10 +144,25 @@ void adc_get_data(void)
             break;
         case ADC_CHANNEL_TEMP_HEATSINK:     // channel for measuring temperature
             adc_temp_heatsink = ADC;
+            if (adc_check_temp() == BIG_ERROR && ui_state != UI_INIT)
+            {
+                ui_state = UI_HI_TEMP;
+                SWITCHING_FAN_ON;
+                adc_block_pa(BLOCK_TIMER);
+            }
+            else if ((adc_check_temp() == ERROR || switching_state == SWITCHING_ON) && ui_state != UI_INIT)
+                SWITCHING_FAN_ON;
+            else if (ui_state != UI_INIT)
+                SWITCHING_FAN_OFF;
             adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
         case ADC_CHANNEL_UCC:               // channel for measuring voltage
             adc_ucc = ADC;
+            if (adc_check_ucc() != SUCCESS && ui_state != UI_INIT)
+            {
+                ui_state = UI_VOLTAGE_BEYOND_LIM;
+                adc_block_pa(BLOCK_ONLY);
+            }
             adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
         default:                            // channel for measurring current
@@ -130,6 +178,11 @@ void adc_get_data(void)
                 adc_icc = (sum >> 9);
                 count2   = 0;
                 sum     = 0;
+                if (adc_check_icc() != SUCCESS)
+                {
+                    ui_state = UI_CURRENT_OVERLOAD;
+                    adc_block_pa(BLOCK_TIMER);
+                }
                 adc_active_channel = ADC_CHANNEL_REFLECTED;
             }
             break;
@@ -282,31 +335,6 @@ uint16_t adc_get_ucc(void)
     return ucc;
 } /* adc_get_ucc */
 
-
-/************************************************************************/
-/*  This block function can do tho types of block PA                    */
-/*  when input argument is BLOCK_TIMER, set block for certain time      */
-/*  when input argument is BLOCK_ONLY, set block without timer          */
-/************************************************************************/
-void adc_block_pa(adc_block_t adc_block)
-{
-    switching_state = SWITCHING_OFF;
-    
-    /*  preset delay, commands in interrupt routine will be executed when
-    *   the value timer_ovf_count reached 1225. Therefore following function
-    *   do routine immediately
-    */
-    timer_ovf_count = 1224;             
-    ptt_set_irq(DISABLE);           // disable interrupt from PTT
-    switching_off_sequence();       // turn off all
-    pom = "HI";                     // status window message set to HI means hight
-    if (adc_block == BLOCK_TIMER)
-    {
-        timer_ovf_count = 0;        // timer routine do after 1225*16.4ms = 20 sec
-    }
-    adc_error_timer(ENABLE);        // enable timer2
-} /* adc_block_pa */
-
 /************************************************************************/
 /*  This function evaluates if reflected power exceed limit             */
 /************************************************************************/
@@ -365,7 +393,7 @@ result_t adc_check_icc(void)
 /************************************************************************/
 /*  Evaluation func, depending on detected err, decides action to do    */
 /************************************************************************/
-void adc_evaluation(void)
+/*void adc_evaluation(void)
 {
     if (adc_check_ref() != SUCCESS)
     {
@@ -394,7 +422,7 @@ void adc_evaluation(void)
     else
         SWITCHING_FAN_OFF;
         
-}/* adc_evaluation */
+}*//* adc_evaluation */
 
 /************************************************************************/
 /*  ADC routine, when the transfer is complete                          */
@@ -404,8 +432,8 @@ ISR(ADC_vect)
     cli();
     //toggle_led_port();
     adc_get_data();             // func for get data
-    if (ui_state != UI_INIT)    // run only if initialization was initiated
-        adc_evaluation();       // run evaluation func
+    //if (ui_state != UI_INIT)    // run only if initialization was initiated
+        //adc_evaluation();       // run evaluation func
     ADCSRA |= 1 << ADSC;        // run ad conversion!
     sei();                      // enable all interruptions
 }
