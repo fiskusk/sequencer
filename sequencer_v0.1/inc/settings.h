@@ -23,7 +23,7 @@
 #define ADC_ICC_MAX                 819     // maximum current
 
 #define ADC_TEMP_HEATSINK_MAX       605     // where turn fan 605 -> 35 °C
-#define ADC_TEMP_HEATSINK_ABS_MAX   250     // Overheat, turn off all, block and turn fan 
+#define ADC_TEMP_HEATSINK_ABS_MAX   250     // Overheat, turn off all, block and turn fan  250 -> 78°C
 
 // define timers
 #define TSEQ 62411  // Time delay between of two sequence

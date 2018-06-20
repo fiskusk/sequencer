@@ -68,71 +68,28 @@ void adc_error_timer(state_t state)
 /************************************************************************/
 void adc_get_data(void)
 {
-    static uint8_t count = 0;               // predefine count to zero
-    static volatile uint16_t sum  = 0;      // summary varriable predefine to zero
-    
     //switch-case structure for relevant states
     switch (adc_active_channel)
     {
         case ADC_CHANNEL_REFLECTED:               // channel for measuring reflected power
-            ++count;
-            if (count > 2 && count < 6)
-                sum += ADC;
-            else if (count >= 6)
-            {
-                adc_reflected = sum / 3;
-                count        = 0;           // reset count of repetions
-                sum = 0;                    // reset summary variable
-                adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK; //next state
-            }
+            adc_reflected =  ADC;
+            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK; //next state
             break;
         case ADC_CHANNEL_TEMP_HEATSINK:     // channel for measuring temperature
-            ++count;
-            if (count > 2 && count < 6)
-                sum += ADC;
-            else if (count >= 6)
-            {
-                adc_temp_heatsink = sum / 3;
-                count        = 0;
-                sum = 0;
-                adc_active_channel = ADC_CHANNEL_POWER;
-            }
+            adc_temp_heatsink = ADC;
+            adc_active_channel = ADC_CHANNEL_POWER;
             break;
         case ADC_CHANNEL_POWER:             // channel for measuring radiated power
-            ++count;
-            if (count > 2 && count < 6)
-                sum += ADC;
-            else if (count >= 6)
-            {
-                adc_power = sum / 3;
-                count        = 0;
-                sum = 0;
-                adc_active_channel = ADC_CHANNEL_UCC;
-            }
+            adc_power = ADC;
+            adc_active_channel = ADC_CHANNEL_UCC;
             break;
         case ADC_CHANNEL_UCC:               // channel for measuring voltage
-            ++count;
-            if (count > 2 && count < 6)
-                sum += ADC;
-            else if (count >= 6)
-            {
-                adc_ucc = sum / 3;
-                count        = 0;
-                sum          = 0;
-                adc_active_channel = ADC_CHANNEL_ICC;
-            }
+            adc_ucc = ADC;
+            adc_active_channel = ADC_CHANNEL_ICC;
             break;
         default:                            // channel for measurring current
-            ++count;
-            if (count > 2 && count < 6)
-                sum += ADC;
-            else if (count >= 6)
-            {
-                adc_icc = sum / 3;
-                count   = 0;
-                sum     = 0;
-                adc_active_channel = ADC_CHANNEL_REFLECTED;
-            }
+            adc_icc = ADC;
+            adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
     }
     ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel 
