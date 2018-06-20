@@ -15,7 +15,7 @@
 #define D1		1.375492e-07
 
 // define ADC limits
-#define ADC_REF_VOLTAGE_MAX         50      // maximum reflected power
+#define ADC_REFLECTED_VOLTAGE_MAX         550      // maximum reflected power 550 is aprox. 55W reflected power
 
 #define ADC_UCC_MIN                 600     // minumum supply voltage
 #define ADC_UCC_MAX                 744     // maximum supply voltage

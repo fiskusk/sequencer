@@ -162,7 +162,7 @@ void ui_handle(void)
 ISR(TIMER0_OVF_vect)
 {
     print_func = ENABLE;                // enable print to LCD in main.c while func
-    static uint16_t adc_ovf_count = 0;  // predefine overflow counter to zero
+    /*static uint16_t adc_ovf_count = 0;  // predefine overflow counter to zero
     static state_t state_led = ENABLE;  // predefine status led to activate
     
     // after 50 repeats interrupt do this
@@ -175,5 +175,5 @@ ISR(TIMER0_OVF_vect)
             state_led = DISABLE;
         else
             state_led = ENABLE;
-    }
+    }*/
 }

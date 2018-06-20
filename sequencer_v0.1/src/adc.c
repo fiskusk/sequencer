@@ -33,8 +33,8 @@ void adc_init(void)
 
     // ADENable, ADStart Conversion, ADInterrupt Enable
     // when set ADATE - ADCH MSB, ADCL LSB
-    // ADPrescaler Select - 2,2,4,8,16,32,64,128
-    ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2); // | (1 << ADATE)
+    // ADPrescaler Select - 2,2,4,8,16,32,64,128 (now div 32)
+    ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1<< ADPS2) | (1 << ADPS0); // | (1 << ADATE)
 
     PRR &= ~(1 << PRADC);           // power reduction register ADC, deactivate-> turn on ADC
 
@@ -62,6 +62,21 @@ void adc_error_timer(state_t state)
 } /* adc_error_timer */
 
 /************************************************************************/
+/*  Toggle port                                                         */
+/************************************************************************/
+
+void toggle_led_port(void)
+{
+    static state_t state_led = ENABLE;  // predefine status led to activate
+    switching_status_led(state_led);// EN/DIS status LED
+    // negate state of LED
+    if (state_led == ENABLE)
+    state_led = DISABLE;
+    else
+    state_led = ENABLE;
+}
+
+/************************************************************************/
 /*  These function switches inc. the measuring inputs of the ADC        */
 /*  first two sample are throw away                                     */   
 /*  next each value are sampled three times and averaged                */                                                    
@@ -69,27 +84,54 @@ void adc_error_timer(state_t state)
 void adc_get_data(void)
 {
     //switch-case structure for relevant states
-    switch (adc_active_channel)
+    static uint8_t count = 0;
+    static uint16_t count2 = 0;
+    volatile static uint32_t sum = 0;
+    switch (adc_active_channel) 
     {
         case ADC_CHANNEL_REFLECTED:               // channel for measuring reflected power
+            toggle_led_port();
             adc_reflected =  ADC;
-            adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK; //next state
-            break;
-        case ADC_CHANNEL_TEMP_HEATSINK:     // channel for measuring temperature
-            adc_temp_heatsink = ADC;
-            adc_active_channel = ADC_CHANNEL_POWER;
+            count++;
+            if (count == 1)
+                 adc_active_channel = ADC_CHANNEL_POWER; //next state
+            else if (count == 2)
+                adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
+            else if (count == 3)
+                adc_active_channel = ADC_CHANNEL_UCC;
+            else
+            {
+                count = 0;
+                adc_active_channel = ADC_CHANNEL_ICC;
+            }
             break;
         case ADC_CHANNEL_POWER:             // channel for measuring radiated power
             adc_power = ADC;
-            adc_active_channel = ADC_CHANNEL_UCC;
+            adc_active_channel = ADC_CHANNEL_REFLECTED;
+            break;
+        case ADC_CHANNEL_TEMP_HEATSINK:     // channel for measuring temperature
+            adc_temp_heatsink = ADC;
+            adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
         case ADC_CHANNEL_UCC:               // channel for measuring voltage
             adc_ucc = ADC;
-            adc_active_channel = ADC_CHANNEL_ICC;
+            adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
         default:                            // channel for measurring current
-            adc_icc = ADC;
-            adc_active_channel = ADC_CHANNEL_REFLECTED;
+            ++count2;
+            if (count2 < 513)
+            {
+                adc_active_channel = ADC_CHANNEL_REFLECTED;
+                sum += ADC;
+            }
+            else if (count2 >= 513)
+            {
+                //toggle_led_port();
+                adc_icc = (sum >> 9);
+                count2   = 0;
+                sum     = 0;
+                adc_active_channel = ADC_CHANNEL_REFLECTED;
+            }
             break;
     }
     ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel 
@@ -196,13 +238,22 @@ uint16_t adc_get_reflected(void)
 {
     float reflected;
     // transfer measrured adc_reflected power to reflection in watts
-    if (adc_reflected > 0)
+    /*if (adc_reflected > 0)
         reflected =  4.537319514e-05*adc_reflected*adc_reflected + 2.981010572e-02*adc_reflected + 1.70300274;
     else
-        reflected = 0;
+        reflected = 0;*/
     //ref = -5.518777275*volts*volts*volts + 26.63047832*volts*volts + 0.1985508811*volts + 0.7206280062;
    
-   return reflected;
+    if (adc_reflected == 0)
+    {
+        reflected = 0;
+    }
+    else if (adc_reflected < 20)
+        reflected = -1.885116627e-3*adc_reflected*adc_reflected + 1.387656694e-1*adc_reflected + 2.011027296;
+    else
+        reflected = 7.930636126e-5*adc_reflected*adc_reflected + 5.22582337e-2*adc_reflected + 3.184718159;
+    //reflected = adc_reflected;
+    return reflected;
 }/* adc_get_ref */
 
 /************************************************************************/
@@ -261,7 +312,7 @@ void adc_block_pa(adc_block_t adc_block)
 /************************************************************************/
 result_t adc_check_ref(void)
 {
-    if (adc_reflected > ADC_REF_VOLTAGE_MAX)
+    if (adc_reflected > ADC_REFLECTED_VOLTAGE_MAX)
         return ERROR;
 
     return SUCCESS;
@@ -350,7 +401,8 @@ void adc_evaluation(void)
 /************************************************************************/
 ISR(ADC_vect)
 {
-    cli();                      // disable all interruptions
+    cli();
+    //toggle_led_port();
     adc_get_data();             // func for get data
     if (ui_state != UI_INIT)    // run only if initialization was initiated
         adc_evaluation();       // run evaluation func
@@ -363,7 +415,7 @@ ISR(ADC_vect)
 /************************************************************************/
 ISR(TIMER2_OVF_vect)
 {
-    if (++timer_ovf_count > 1225) // 20s 1225 3s 183
+    if (++timer_ovf_count > 183) // 20s 1225 3s 183
     {
         timer_ovf_count = 0;        // reset overflow counter
         pom = "OK";                 // set status for screen its OK
