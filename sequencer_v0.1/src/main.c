@@ -45,7 +45,7 @@ void setup(void)
 /************************************************************************/
 int main(void)
 {
-    wdt_enable(WDTO_2S);            // watchdog enable for 2 second
+    wdt_enable(WDTO_8S);            // watchdog enable for 2 second
 
     setup();                        // run initial initialization
    
@@ -55,11 +55,7 @@ int main(void)
         wdt_reset();                // reset wdt state
         // each interrupt set print_func to enable and do this (each approx 16ms)
         if (print_func == ENABLE)   // when UI TC0 set enable print to LCD
-            ui_handle();            // printing function
-        if (evaluation == ENABLE)
-        {
-               
-        }            
+            ui_handle();            // printing function   
     }
     return 0;
 } /* main */

@@ -99,7 +99,7 @@ void ui_handle(void)
             break;
         
         case UI_HI_REF:                     // UI state, when HI SWR
-            sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 20 - (timer_ovf_count / 61) );
+            sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 5 - (timer_ovf_count / 61) );
             lcd_gotoxy(0,1);
             lcd_puts(buffer);
             sprintf_P(buffer, PSTR("TOO HIGH REF%4d"),adc_ref_cache );
@@ -108,7 +108,7 @@ void ui_handle(void)
             break;
         
         case UI_HI_TEMP:                    // UI state, when HI heatsink temp
-            sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 20 - (timer_ovf_count / 61) );
+            sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 5 - (timer_ovf_count / 61) );
             lcd_gotoxy(0,1);
             lcd_puts(buffer);
             lcd_gotoxy(0,2);
@@ -126,7 +126,7 @@ void ui_handle(void)
             lcd_gotoxy(0,1);
             lcd_puts(" SUPPLY CURRENT ");
             lcd_gotoxy(0,2);
-            sprintf_P(buffer, PSTR("EXCEEDED 40A %2ds"), 20 - (timer_ovf_count / 61) );
+            sprintf_P(buffer, PSTR("EXCEEDED 40A %2ds"), 5 - (timer_ovf_count / 61) );
             lcd_puts(buffer);
             break;
         

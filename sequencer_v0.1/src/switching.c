@@ -33,6 +33,25 @@ void switching_init(void)
     
 }/* switching_init */
 
+void switching(void)
+{
+    switching_timer(DISABLE);           // disable timer1
+    if (button_ptt_is_pressed() && adc_check_ref() == SUCCESS
+    && adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
+    && adc_check_icc() == SUCCESS)
+    {
+        switching_state = SWITCHING_ON; // state of switching is ON
+        pom = "TX";                     // print on display status its TX
+        switching_on_sequence();
+    }
+    else
+    {
+        switching_state = SWITCHING_OFF;// state of switching is OFF
+        pom = "RX";                     // print on display status its TX
+        switching_off_sequence();
+    }
+}
+
 /************************************************************************/
 /*  These function turn on or turn of SWITCHING TC1                     */
 /*   description of interrupt behavior at ISR routine                    */
@@ -185,19 +204,20 @@ void switching_off_sequence(void)
 /************************************************************************/
 ISR(TIMER1_OVF_vect)
 {
-    switching_timer(DISABLE);           // disable timer1
-    if (button_ptt_is_pressed() && adc_check_ref() == SUCCESS       
-        && adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
-        && adc_check_icc() == SUCCESS)
-    {
-        switching_state = SWITCHING_ON; // state of switching is ON
-        pom = "TX";                     // print on display status its TX
-        switching_on_sequence();
-    }
-    else
-    {
-        switching_state = SWITCHING_OFF;// state of switching is OFF
-        pom = "RX";                     // print on display status its TX
-        switching_off_sequence();
-    }
+    switching();
+    //switching_timer(DISABLE);           // disable timer1
+    //if (button_ptt_is_pressed() && adc_check_ref() == SUCCESS       
+        //&& adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
+        //&& adc_check_icc() == SUCCESS)
+    //{
+        //switching_state = SWITCHING_ON; // state of switching is ON
+        //pom = "TX";                     // print on display status its TX
+        //switching_on_sequence();
+    //}
+    //else
+    //{
+        //switching_state = SWITCHING_OFF;// state of switching is OFF
+        //pom = "RX";                     // print on display status its TX
+        //switching_off_sequence();
+    //}
 }

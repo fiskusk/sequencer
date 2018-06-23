@@ -1,6 +1,7 @@
 #include "adc.h"
 #include <avr/pgmspace.h>
 #include "stdio.h"
+#include <util/delay.h>
 
 adc_channel_t adc_active_channel = ADC_CHANNEL_REFLECTED; // default first channel in ADC process
 adc_block_t adc_block;
@@ -14,7 +15,6 @@ volatile uint16_t adc_temp_heatsink;
 volatile uint16_t timer_ovf_count = 0; 
 
 extern volatile ui_state_t ui_state;
-volatile state_t evaluation = DISABLE;
 
 /************************************************************************/
 /*  initialization function for ADC                                     */
@@ -116,16 +116,9 @@ void adc_get_data(void)
     {
         case ADC_CHANNEL_REFLECTED:               // channel for measuring reflected power
             adc_reflected =  ADC;
-            //toggle_led_port();
-            switching_status_led(ENABLE);
+            toggle_led_port();
             count++;
-            if (adc_check_ref() != SUCCESS && ui_state != UI_INIT)
-            {
-                adc_ref_cache = adc_reflected;            // auxiliary variable for save high value
-                ui_state = UI_HI_REF;               // ui state for print on screen
-                adc_block_pa(BLOCK_TIMER);          // block and delay 20s
-            }
-            else if (count == 1)
+            if (count == 1)
                  adc_active_channel = ADC_CHANNEL_POWER; //next state
             else if (count == 2)
                 adc_active_channel = ADC_CHANNEL_TEMP_HEATSINK;
@@ -136,14 +129,24 @@ void adc_get_data(void)
                 count = 0;
                 adc_active_channel = ADC_CHANNEL_ICC;
             }
-            switching_status_led(DISABLE);
+            ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel 
+            if (adc_check_ref() != SUCCESS && ui_state != UI_INIT)
+            {
+                adc_ref_cache = adc_reflected;            // auxiliary variable for save high value
+                ui_state = UI_HI_REF;               // ui state for print on screen
+                adc_block_pa(BLOCK_TIMER);          // block and delay 20s
+            }
             break;
+            
         case ADC_CHANNEL_POWER:             // channel for measuring radiated power
             adc_power = ADC;
             adc_active_channel = ADC_CHANNEL_REFLECTED;
+            ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel
             break;
         case ADC_CHANNEL_TEMP_HEATSINK:     // channel for measuring temperature
             adc_temp_heatsink = ADC;
+            adc_active_channel = ADC_CHANNEL_REFLECTED;
+            ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel
             if (adc_check_temp() == BIG_ERROR && ui_state != UI_INIT)
             {
                 ui_state = UI_HI_TEMP;
@@ -154,22 +157,23 @@ void adc_get_data(void)
                 SWITCHING_FAN_ON;
             else if (ui_state != UI_INIT)
                 SWITCHING_FAN_OFF;
-            adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
         case ADC_CHANNEL_UCC:               // channel for measuring voltage
             adc_ucc = ADC;
+            adc_active_channel = ADC_CHANNEL_REFLECTED;
+            ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel
             if (adc_check_ucc() != SUCCESS && ui_state != UI_INIT)
             {
                 ui_state = UI_VOLTAGE_BEYOND_LIM;
                 adc_block_pa(BLOCK_ONLY);
             }
-            adc_active_channel = ADC_CHANNEL_REFLECTED;
             break;
         default:                            // channel for measurring current
             ++count2;
             if (count2 < 513)
             {
                 adc_active_channel = ADC_CHANNEL_REFLECTED;
+                ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel
                 sum += ADC;
             }
             else if (count2 >= 513)
@@ -178,16 +182,17 @@ void adc_get_data(void)
                 adc_icc = (sum >> 9);
                 count2   = 0;
                 sum     = 0;
+                adc_active_channel = ADC_CHANNEL_REFLECTED;
+                ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel
                 if (adc_check_icc() != SUCCESS)
                 {
                     ui_state = UI_CURRENT_OVERLOAD;
                     adc_block_pa(BLOCK_TIMER);
                 }
-                adc_active_channel = ADC_CHANNEL_REFLECTED;
             }
             break;
     }
-    ADMUX = (ADMUX & 0xF0) | adc_active_channel; // switching adc channel 
+    
 } /* adc_get_data */
 
 /************************************************************************/
@@ -346,9 +351,6 @@ result_t adc_check_ref(void)
     return SUCCESS;
 }/* adc_check_ref */
 
-/*
-   
-*/
 /************************************************************************/
 /*  This function evaluates if heatsink temperature exeed limits        */
 /*  Evaluates three states:                                             */
@@ -391,40 +393,6 @@ result_t adc_check_icc(void)
 }
 
 /************************************************************************/
-/*  Evaluation func, depending on detected err, decides action to do    */
-/************************************************************************/
-/*void adc_evaluation(void)
-{
-    if (adc_check_ref() != SUCCESS)
-    {
-        adc_ref_cache = adc_reflected;            // auxiliary variable for save high value
-        ui_state = UI_HI_REF;               // ui state for print on screen
-        adc_block_pa(BLOCK_TIMER);          // block and delay 20s
-    }
-    
-    if (adc_check_ucc() != SUCCESS)
-    {
-        ui_state = UI_VOLTAGE_BEYOND_LIM;   
-        adc_block_pa(BLOCK_ONLY);          
-    }
-    if (adc_check_icc() != SUCCESS)
-    {
-        ui_state = UI_CURRENT_OVERLOAD;
-        adc_block_pa(BLOCK_TIMER);
-    }
-    if (adc_check_temp() == BIG_ERROR)
-    {
-        ui_state = UI_HI_TEMP;
-        adc_block_pa(BLOCK_TIMER);
-    }
-    if (adc_check_temp() == ERROR || adc_check_temp() == BIG_ERROR || switching_state == SWITCHING_ON)
-        SWITCHING_FAN_ON;
-    else
-        SWITCHING_FAN_OFF;
-        
-}*//* adc_evaluation */
-
-/************************************************************************/
 /*  ADC routine, when the transfer is complete                          */
 /************************************************************************/
 ISR(ADC_vect)
@@ -432,8 +400,7 @@ ISR(ADC_vect)
     cli();
     //toggle_led_port();
     adc_get_data();             // func for get data
-    //if (ui_state != UI_INIT)    // run only if initialization was initiated
-        //adc_evaluation();       // run evaluation func
+    _delay_us(3);
     ADCSRA |= 1 << ADSC;        // run ad conversion!
     sei();                      // enable all interruptions
 }
@@ -443,7 +410,7 @@ ISR(ADC_vect)
 /************************************************************************/
 ISR(TIMER2_OVF_vect)
 {
-    if (++timer_ovf_count > 183) // 20s 1225 3s 183
+    if (++timer_ovf_count > 306) // 20s 1225 3s 183
     {
         timer_ovf_count = 0;        // reset overflow counter
         pom = "OK";                 // set status for screen its OK

@@ -33,8 +33,6 @@ typedef enum {
     BLOCK_TIMER,
 } adc_block_t;
 
-extern volatile state_t evaluation;
-
 // ADC saved values
 extern volatile uint16_t adc_reflected;           // reflected power
 extern volatile uint16_t adc_ref_cache;     // cache reflected power

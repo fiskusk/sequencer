@@ -1,4 +1,5 @@
 #include "ptt.h"
+#include "switching.h"
 
 /************************************************************************/
 /*  Initialization function for PTT button                              */
@@ -25,7 +26,8 @@ void ptt_set_irq(state_t state)
 /************************************************************************/
 ISR(INT0_vect)
 {
-    TCNT1 = 64911;              // the interruption from timer 1 occurs in 10 ms
-    switching_timer(ENABLE);    // enable timer 1
+    switching();
+    //TCNT1 = 65535;              // the interruption from timer 1 occurs in 10 ms (64911)
+    //switching_timer(ENABLE);    // enable timer 1
 }
 

@@ -82,6 +82,7 @@ void switching_ucc(state_t state);
 void switching_fan(state_t state);
 void switching_on_sequence(void);
 void switching_off_sequence(void);
+void switching(void);
 
 
 #endif // SWITCHING_H_INCLUDED

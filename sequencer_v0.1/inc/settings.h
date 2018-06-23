@@ -15,7 +15,7 @@
 #define D1		1.375492e-07
 
 // define ADC limits
-#define ADC_REFLECTED_VOLTAGE_MAX         550      // maximum reflected power 550 is aprox. 55W reflected power
+#define ADC_REFLECTED_VOLTAGE_MAX   550      // maximum reflected power 550 is aprox. 55W reflected power
 
 #define ADC_UCC_MIN                 600     // minumum supply voltage
 #define ADC_UCC_MAX                 744     // maximum supply voltage
@@ -23,7 +23,7 @@
 #define ADC_ICC_MAX                 819     // maximum current
 
 #define ADC_TEMP_HEATSINK_MAX       605     // where turn fan 605 -> 35 °C
-#define ADC_TEMP_HEATSINK_ABS_MAX   250     // Overheat, turn off all, block and turn fan  250 -> 78°C
+#define ADC_TEMP_HEATSINK_ABS_MAX   220     // Overheat, turn off all, block and turn fan  250 -> 78°C
 
 // define timers
 #define TSEQ 62411  // Time delay between of two sequence
