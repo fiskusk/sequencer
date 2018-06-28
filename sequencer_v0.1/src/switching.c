@@ -12,6 +12,8 @@ void switching_init(void)
 {
     // setup ports as outputs
     SWITCHING_STATUS_LED_DDR    |= 1 << SWITCHING_STATUS_LED_PIN_NUM;
+    SWITCHING_OPERATE_STBY_LED_DDR |= 1 << SWITCHING_OPERATE_STBY_LED_PIN_NUM;
+    SWITCHING_FAULT_LED_DDR     |= 1 << SWITCHING_FAULT_LED_PIN_NUM;
     SWITCHING_RELAY1_DDR        |= 1 << SWITCHING_RELAY1_PIN_NUM;
     SWITCHING_RELAY2_DDR        |= 1 << SWITCHING_RELAY2_PIN_NUM;
     SWITCHING_BIAS_DDR          |= 1 << SWITCHING_BIAS_PIN_NUM;
@@ -33,21 +35,33 @@ void switching_init(void)
     
 }/* switching_init */
 
+void switching_operate_stby_led(state_t state)
+{
+    (state == ENABLE) ? SWITCHING_OP_LED : SWITCHING_STBY_LED;
+    
+}
+
+void switching_fault_led(state_t state)
+{
+    (state ==  ENABLE) ? SWITCHING_FAULT_LED_ON : SWITCHING_FAULT_LED_OFF;
+}
+
 void switching(void)
 {
     switching_timer(DISABLE);           // disable timer1
     if (button_ptt_is_pressed() && adc_check_ref() == SUCCESS
     && adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
-    && adc_check_icc() == SUCCESS)
+    && adc_check_icc() == SUCCESS && adc_check_pwr() == SUCCESS 
+    && ui_state != UI_STANDBY)
     {
         switching_state = SWITCHING_ON; // state of switching is ON
-        pom = "TX";                     // print on display status its TX
+        mode = "TX";                     // print on display status its TX
         switching_on_sequence();
     }
     else
     {
         switching_state = SWITCHING_OFF;// state of switching is OFF
-        pom = "RX";                     // print on display status its TX
+        mode = "RX";                     // print on display status its TX
         switching_off_sequence();
     }
 }
@@ -205,19 +219,5 @@ void switching_off_sequence(void)
 ISR(TIMER1_OVF_vect)
 {
     switching();
-    //switching_timer(DISABLE);           // disable timer1
-    //if (button_ptt_is_pressed() && adc_check_ref() == SUCCESS       
-        //&& adc_check_temp() != BIG_ERROR && adc_check_ucc() == SUCCESS
-        //&& adc_check_icc() == SUCCESS)
-    //{
-        //switching_state = SWITCHING_ON; // state of switching is ON
-        //pom = "TX";                     // print on display status its TX
-        //switching_on_sequence();
-    //}
-    //else
-    //{
-        //switching_state = SWITCHING_OFF;// state of switching is OFF
-        //pom = "RX";                     // print on display status its TX
-        //switching_off_sequence();
-    //}
+    
 }

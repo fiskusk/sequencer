@@ -15,7 +15,8 @@
 #define D1		1.375492e-07
 
 // define ADC limits
-#define ADC_REFLECTED_VOLTAGE_MAX   550      // maximum reflected power 550 is aprox. 55W reflected power
+#define ADC_REFLECTED_VOLTAGE_MAX   800    // maximum reflected power 800 is aprox. 100W reflected power
+#define ADC_POWER_VOLTAGE_MAX       973     // maximum output power 973 is aprox. 1300W output power
 
 #define ADC_UCC_MIN                 600     // minumum supply voltage
 #define ADC_UCC_MAX                 744     // maximum supply voltage
@@ -29,6 +30,6 @@
 #define TSEQ 62411  // Time delay between of two sequence
 #define TREL 65535  // Delay between servo1 and servo2. They must switch simultaneously.
 
-extern char *pom;
+extern char *mode;
 
 #endif // SETTINGS_H_INCLUDED

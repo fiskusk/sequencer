@@ -35,7 +35,6 @@ typedef enum {
 
 // ADC saved values
 extern volatile uint16_t adc_reflected;           // reflected power
-extern volatile uint16_t adc_ref_cache;     // cache reflected power
 extern volatile uint16_t adc_ucc;           // voltage
 extern volatile uint16_t adc_icc;           // current
 extern volatile uint16_t adc_power;         // rediated power
@@ -55,6 +54,7 @@ uint16_t adc_get_icc(void);
 uint16_t adc_get_ucc(void);
 
 result_t adc_check_ref(void);
+result_t adc_check_pwr(void);
 result_t adc_check_temp(void);
 result_t adc_check_ucc(void);
 result_t adc_check_icc(void);

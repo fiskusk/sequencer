@@ -9,8 +9,10 @@
 
 typedef enum {
     UI_INIT,
-    UI_RUN,
+    UI_OPERATE,
+    UI_STANDBY,
     UI_HI_REF,
+    UI_HI_PWR,
     UI_HI_TEMP,
     UI_VOLTAGE_BEYOND_LIM,
     UI_CURRENT_OVERLOAD,
@@ -23,6 +25,7 @@ extern volatile state_t print_func;
 // functions
 void ui_init(void);
 void ui_handle(void);
+void toggle_status_led_port(void);
 
 
 

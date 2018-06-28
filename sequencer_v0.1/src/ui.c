@@ -4,12 +4,13 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include "lcd.h"
+#include "op_button.h"
 
 volatile ui_state_t ui_state;               
 volatile state_t print_func;
 
 uint16_t pwr, ref;                          
-//uint16_t desetinna = 0;
+uint8_t delay_ovf_count = 0;
 //float des_tvar     = 0;
 char buffer[20];                            
 
@@ -24,6 +25,21 @@ void ui_init(void)
     ui_state = UI_INIT;                     // default UI_state, startup message
     
 } /* ui_init */
+
+/************************************************************************/
+/*  Toggle port                                                         */
+/************************************************************************/
+
+void toggle_status_led_port(void)
+{
+    static state_t state_led = ENABLE;  // predefine status led to activate
+    switching_status_led(state_led);// EN/DIS status LED
+    // negate state of LED
+    if (state_led == ENABLE)
+        state_led = DISABLE;
+    else
+        state_led = ENABLE;
+}
 
 /************************************************************************/
 /*  ROUNDING FUNCTION                                                   */
@@ -58,39 +74,66 @@ void ui_handle(void)
 {
     switch (ui_state)
     {
-        case UI_INIT:                       // initial first message 
-            ptt_set_irq(DISABLE);           // disable PTT interruption
-            lcd_gotoxy(0,1);
-            lcd_puts("PA 1 kW 144 MHz");
-            lcd_gotoxy(4,2);
-            lcd_puts("rev. 1.0");
-            switching_fan(ENABLE);          // turn on FAN 
-            _delay_ms(1000);        
-            wdt_reset();                    // reset watchdog
+        case UI_INIT:                       // initial first message
+            if (delay_ovf_count == 0)
+            {
+                ptt_set_irq(DISABLE);           // disable PTT interruption
+                operate_button_set_irq(DISABLE);// disable OP butt. intrr.
+                lcd_gotoxy(0,1);
+                lcd_puts("PA 1 kW 144 MHz");
+                lcd_gotoxy(4,2);
+                lcd_puts("rev. 1.1");
+            }
+            if (delay_ovf_count <= 61)
+            {
+                delay_ovf_count++;
+                switching_fan(ENABLE);          // turn on FAN 
+                break;
+            }
             switching_fan(DISABLE);         // turn off FAN
-            _delay_ms(1500);
-            wdt_reset();                    // reset watchdog again
-            ptt_set_irq(ENABLE);            // enable PTT interruption
-            
+            if (delay_ovf_count <= 150)
+            {
+                delay_ovf_count++;
+                break;
+            }
+            delay_ovf_count = 0;
             // print to LCD static text
             lcd_gotoxy(0,0);
             lcd_puts("SWR  .     ");
-            lcd_gotoxy(0,1);
-            lcd_puts("OUT POWER      W");
-            lcd_gotoxy(0,2);
-            lcd_puts("REF.POWER      W");
             lcd_gotoxy(0,3);
             lcd_puts("U=  . V  I=  . A");
-            pom = "OK";                     // top right corner prints status OK
-            ui_state = UI_RUN;              // next state is normal operating 
+            ui_state = UI_STANDBY;              // next state is standby mode
+            mode = "SB";
+            switching_operate_stby_led(DISABLE);    // turn on LED, which indicates stby mode
+            operate_button_set_irq(ENABLE);
             break;
         
-        case UI_RUN:                        // normal operating state
+        case UI_STANDBY:
+            lcd_gotoxy(0,1);
+            lcd_puts("  STANDBY MODE  ");
+            lcd_gotoxy(0,2);
+            delay_ovf_count++;
+            if (delay_ovf_count <= 92)
+            {
+                lcd_puts("TO UNBLOCK PRESS");
+                break;
+            }
+            if (delay_ovf_count <= 184)
+            {
+                lcd_puts("OPERATION BUTTON");
+                break;
+            }
+            delay_ovf_count = 0;
+            break;
+            
+        case UI_OPERATE:                        // normal operating state
             pwr = adc_get_pwr();
             sprintf_P(buffer, PSTR("OUT POWER %4d W"), pwr); 
             lcd_gotoxy(0,1);
             lcd_puts(buffer);               // print power
             ref = adc_get_reflected();
+            if (ref == 2)
+                ref = 0;
             sprintf_P(buffer, PSTR("REF.POWER %4d W"), ref);
             lcd_gotoxy(0,2);
             lcd_puts(buffer);               // print reflected power
@@ -99,55 +142,117 @@ void ui_handle(void)
             break;
         
         case UI_HI_REF:                     // UI state, when HI SWR
-            sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 5 - (timer_ovf_count / 61) );
             lcd_gotoxy(0,1);
-            lcd_puts(buffer);
-            sprintf_P(buffer, PSTR("TOO HIGH REF%4d"),adc_ref_cache );
+            lcd_puts("TOO HI REF POWER");
             lcd_gotoxy(0,2);
-            lcd_puts(buffer);
+            delay_ovf_count++;
+            if (delay_ovf_count <= 92)
+            {
+                lcd_puts("TO UNBLOCK PRESS");
+                break;
+            }
+            if (delay_ovf_count <= 184)
+            {
+                lcd_puts("OPERATION BUTTON");
+                break; 
+            }
+            delay_ovf_count = 0;
+            break;
+            
+        case UI_HI_PWR:                     // UI state, when HI SWR
+            lcd_gotoxy(0,1);
+            lcd_puts("TOO HI OUT POWER");
+            lcd_gotoxy(0,2);
+            delay_ovf_count++;
+            if (delay_ovf_count <= 92)
+            {
+                lcd_puts("TO UNBLOCK PRESS");
+                break;
+            }
+            if (delay_ovf_count <= 184)
+            {
+                lcd_puts("OPERATION BUTTON");
+                break;
+            }
+            delay_ovf_count = 0;
             break;
         
         case UI_HI_TEMP:                    // UI state, when HI heatsink temp
-            sprintf_P(buffer, PSTR("BLOCK TX FOR %2ds"), 5 - (timer_ovf_count / 61) );
             lcd_gotoxy(0,1);
-            lcd_puts(buffer);
-            lcd_gotoxy(0,2);
             lcd_puts("HEATSINK TEMP HI");
+            lcd_gotoxy(0,2);
+            delay_ovf_count++;
+            if (delay_ovf_count <= 92)
+            {
+                lcd_puts("TO UNBLOCK PRESS");
+                break;
+            }
+            if (delay_ovf_count <= 184)
+            {
+                lcd_puts("OPERATION BUTTON");
+                break;
+            }
+            delay_ovf_count = 0;
             break;
         
         case UI_VOLTAGE_BEYOND_LIM:         // UI state, when voltage beyonfd limits
             lcd_gotoxy(0,1);
-            lcd_puts("  POWER SUPPLY  ");
-            lcd_gotoxy(0,2);
             lcd_puts("VOLT. BEYOND LIM");
+            lcd_gotoxy(0,2);
+            delay_ovf_count++;
+            if (delay_ovf_count <= 92)
+            {
+                lcd_puts("TO UNBLOCK PRESS");
+                break;
+            }
+            if (delay_ovf_count <= 184)
+            {
+                lcd_puts("OPERATION BUTTON");
+                break;
+            }
+            delay_ovf_count = 0;
             break;
         
         case UI_CURRENT_OVERLOAD:           // UI state, when current overload
             lcd_gotoxy(0,1);
-            lcd_puts(" SUPPLY CURRENT ");
+            lcd_puts("CURR. EXCEED 40A");
             lcd_gotoxy(0,2);
-            sprintf_P(buffer, PSTR("EXCEEDED 40A %2ds"), 5 - (timer_ovf_count / 61) );
-            lcd_puts(buffer);
+            delay_ovf_count++;
+            if (delay_ovf_count <= 92)
+            {
+                lcd_puts("TO UNBLOCK PRESS");
+                break;
+            }
+            if (delay_ovf_count <= 184)
+            {
+                lcd_puts("OPERATION BUTTON");
+                break;
+            }
+            delay_ovf_count = 0;
             break;
         
         default:
-            ui_state = UI_RUN;
+            ui_state = UI_OPERATE;
             break;
     }
-    // these statements are always redrawn 
-    lcd_gotoxy(2,3);
-    lcd_puts(ui_one_decimal(adc_get_ucc() ) );                  // print voltage
+    if (ui_state != UI_INIT)
+    {
+        // these statements are always redrawn
+        lcd_gotoxy(2,3);
+        lcd_puts(ui_one_decimal(adc_get_ucc() ) );                  // print voltage
+        
+        lcd_gotoxy(11,3);
+        lcd_puts(ui_one_decimal(adc_get_icc() ) );                  // print current
+        //lcd_puts(ui_decimal(12345));
+        
+        sprintf_P(buffer, PSTR("%2d%cC "), adc_get_temp(),0xDF);  // 0xDF is ° {degrees}
+        lcd_gotoxy(9,0);
+        lcd_puts(buffer);           // print temperature
+        
+        lcd_gotoxy(14,0);
+        lcd_puts(mode);              // print status
+    }
     
-    lcd_gotoxy(11,3);
-    lcd_puts(ui_one_decimal(adc_get_icc() ) );                  // print current
-    //lcd_puts(ui_decimal(12345));
-    
-    sprintf_P(buffer, PSTR("%2d%cC "), adc_get_temp(),0xDF);  // 0xDF is ° {degrees}   
-    lcd_gotoxy(9,0);
-    lcd_puts(buffer);           // print temperature
-    
-    lcd_gotoxy(14,0);
-    lcd_puts(pom);              // print status
     
     // stop draw to display (next print after next interuption (aprrox. 16ms)
     print_func = DISABLE;       
@@ -162,18 +267,12 @@ void ui_handle(void)
 ISR(TIMER0_OVF_vect)
 {
     print_func = ENABLE;                // enable print to LCD in main.c while func
-    /*static uint16_t adc_ovf_count = 0;  // predefine overflow counter to zero
-    static state_t state_led = ENABLE;  // predefine status led to activate
-    
-    // after 50 repeats interrupt do this
-    if (++adc_ovf_count > 50)       
+    static uint16_t led_ovf_count = 0;  // predefine overflow counter to zero
+        
+    // after 50 repeats interrupt do this (820 ms)
+    if (++led_ovf_count > 50)       
     {
-        adc_ovf_count = 0;              // reset overflow counter
-        switching_status_led(state_led);// EN/DIS status LED
-        // negate state of LED
-        if (state_led == ENABLE)
-            state_led = DISABLE;
-        else
-            state_led = ENABLE;
-    }*/
+        led_ovf_count = 0;              // reset overflow counter
+        toggle_status_led_port();
+    }
 }

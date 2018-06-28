@@ -12,10 +12,11 @@
 #include "ui.h"
 #include "adc.h"
 #include "ptt.h"
+#include "op_button.h"
 #include "switching.h"
 
 // global variables
-char *pom;      // auxiliary variable for sending message to UART or LCD
+char *mode;      // auxiliary variable for sending message to UART or LCD
 
 /************************************************************************/
 /*  Initial setup function                                              */
@@ -28,6 +29,7 @@ void setup(void)
     
     ui_init();                      // setup TC0 and set default startup message
     ptt_init();                     // set port for PTT button
+    operate_button_init();          // initialize operate button 
     adc_init();                     // setup ADC, TC2 and ADC ports (PortC)
     switching_init();               // setup ports as output and predefine states, EN TC0
 
@@ -45,7 +47,7 @@ void setup(void)
 /************************************************************************/
 int main(void)
 {
-    wdt_enable(WDTO_8S);            // watchdog enable for 2 second
+    wdt_enable(WDTO_250MS);            // watchdog enable for 2 second
 
     setup();                        // run initial initialization
    
